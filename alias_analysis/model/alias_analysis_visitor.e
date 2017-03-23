@@ -130,7 +130,7 @@ feature {NONE}
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 			end
 			if attached get_alias_info (Void, a_node.target) as l_target and then l_target.is_variable and then attached get_alias_info (Void, a_node.source) as l_source then
-				if alias_graph.is_conditional_branch or alias_graph.is_loop_iter then
+				if alias_graph.is_conditional_branch or alias_graph.is_loop_iter or alias_graph.is_dyn_bin then
 						-- check if the target is an expanded type (do nothing if so)
 						--TODO: to improve
 					if not attached l_target.alias_object or else (attached l_target.alias_object as target and then not target.first.type.is_expanded) then
@@ -353,6 +353,7 @@ feature {NONE} -- utilities
 		local
 			l_obj: TWO_WAY_LIST [ALIAS_OBJECT]
 			entities_caller: TWO_WAY_LIST [STRING]
+			output_file: PLAIN_TEXT_FILE
 		do
 			if not attached a_node then
 				print ("Void")
@@ -425,29 +426,47 @@ feature {NONE} -- utilities
 						if l_routine.argument_count = l_node.parameter_count then
 
 								-- check if there are several version
-							if attached a_target as target then
+							if attached a_target as target and then
 									-- this is indeed a qualified call
-								print (target.type.name)
-								if attached System.eiffel_universe.classes_with_name (target.type.name) as l_classes and then l_classes.count > 0 then
-									l_classes.first.compiled_class.direct_descendants.start
-									from
-
-									until
-										l_classes.first.compiled_class.direct_descendants.after
+								attached System.eiffel_universe.classes_with_name (target.type.name) as l_classes and then l_classes.count > 0
+							then
+								if l_classes.first.compiled_class.direct_descendants.count >= 1 then
+									alias_graph.init_dyn_bin
+									across
+										l_classes.first.compiled_class.direct_descendants as descendant
 									loop
-										print (l_classes.first.compiled_class.direct_descendants.item.name)
 										io.new_line
-										l_classes.first.compiled_class.direct_descendants.forth
-									end
+										print ("Descendant class: ")
+										print (descendant.item.name)
+										io.new_line
+										print ("Feature name: ")
+										print (l_routine.e_feature.name_32)
 
---			print (routine.access_class.computed_parents.count)
---			print (routine.access_class.computed_parents.first.class_name)
---			print  (routine.access_class.number_of_ancestors)
---			print (routine.access_class.conforming_parents_classes.count
+										if attached {PROCEDURE_I} descendant.item.feature_named_32 (l_routine.e_feature.name_32) as l_r then
+											io.new_line
+											print (l_r.e_feature.name_32)
+											io.new_line
+											alias_graph.init_feature_version
+											Result := call_routine (a_target, l_r, l_node.parameters, target.entity)
+											create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+											output_file.put_string  (alias_graph.to_graph)
+											output_file.close;
+											alias_graph.restore_graph_dyn
+											create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+											output_file.put_string  (alias_graph.to_graph)
+											output_file.close;
+										end
+									end
 								end
 							end
-							stop (333)
 							Result := call_routine (a_target, l_routine, l_node.parameters, if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [STRING]}.make end)
+							create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+							output_file.put_string  (alias_graph.to_graph)
+							output_file.close;
+							alias_graph.finalising_dyn_bind
+							create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+							output_file.put_string  (alias_graph.to_graph)
+							output_file.close;
 						end
 					end
 				else
