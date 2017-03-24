@@ -648,6 +648,8 @@ feature -- Managing possible Dyn Bind
 			print_atts_depth (stack_top.current_object.attributes)
 			print_atts_depth (stack_top.locals)
 			alias_dyn.restoring_state (stack.first, stack_top)
+			print_atts_depth (stack_top.current_object.attributes)
+			print_atts_depth (stack_top.locals)
 		end
 
 	finalising_dyn_bind

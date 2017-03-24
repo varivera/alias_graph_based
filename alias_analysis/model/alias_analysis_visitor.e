@@ -132,7 +132,7 @@ feature {NONE}
 			if attached get_alias_info (Void, a_node.target) as l_target and then l_target.is_variable and then attached get_alias_info (Void, a_node.source) as l_source then
 				if alias_graph.is_conditional_branch or alias_graph.is_loop_iter or alias_graph.is_dyn_bin then
 						-- check if the target is an expanded type (do nothing if so)
-						--TODO: to improve
+					stop (334)
 					if not attached l_target.alias_object or else (attached l_target.alias_object as target and then not target.first.type.is_expanded) then
 							-- updating sets Additions and Deletions used to restore the Graph after a conditional branch, loop body and recursion
 						stop (12)
@@ -347,13 +347,20 @@ feature {NONE}
 
 feature {NONE} -- utilities
 
+	show_graph
+			-- depicts the graph
+		do
+			(create {EXECUTION_ENVIRONMENT}).launch (
+					"echo %"" + alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
+				)
+		end
+
 	get_alias_info (a_target: ALIAS_OBJECT; a_node: AST_EIFFEL): ALIAS_OBJECT_INFO
 		require
 			a_node /= Void
 		local
 			l_obj: TWO_WAY_LIST [ALIAS_OBJECT]
 			entities_caller: TWO_WAY_LIST [STRING]
-			output_file: PLAIN_TEXT_FILE
 		do
 			if not attached a_node then
 				print ("Void")
@@ -446,27 +453,26 @@ feature {NONE} -- utilities
 											io.new_line
 											print (l_r.e_feature.name_32)
 											io.new_line
+											if tracing then
+												alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
+												alias_graph.print_atts_depth (alias_graph.stack_top.locals)
+											end
+											stop (355)
 											alias_graph.init_feature_version
 											Result := call_routine (a_target, l_r, l_node.parameters, target.entity)
-											create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
-											output_file.put_string  (alias_graph.to_graph)
-											output_file.close;
+											show_graph
 											alias_graph.restore_graph_dyn
-											create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
-											output_file.put_string  (alias_graph.to_graph)
-											output_file.close;
+											show_graph
 										end
 									end
 								end
 							end
 							Result := call_routine (a_target, l_routine, l_node.parameters, if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [STRING]}.make end)
-							create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
-							output_file.put_string  (alias_graph.to_graph)
-							output_file.close;
-							alias_graph.finalising_dyn_bind
-							create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
-							output_file.put_string  (alias_graph.to_graph)
-							output_file.close;
+							if alias_graph.is_dyn_bin then
+								show_graph
+								alias_graph.finalising_dyn_bind
+								show_graph
+							end
 						end
 					end
 				else
