@@ -43,42 +43,6 @@ feature {NONE}
 			statement_observer = a_statement_observer
 		end
 
---		test
---		do
---			print (routine.access_class.computed_parents.count)
---			print (routine.access_class.computed_parents.first.class_name)
---			print  (routine.access_class.number_of_ancestors)
---			print (routine.access_class.conforming_parents_classes.count)
---			
---			
---			routine.access_class.
---			from
---				routine.access_class.conforming_parents_classes.start
---			until
---				routine.access_class.conforming_parents_classes.after
---			loop
---				print (routine.access_class.conforming_parents_classes.item.name)
---				routine.access_class.conforming_parents_classes.forth
---			end
-
-----			if attached {E_ROUTINE} routine.e_feature.updated_version as r and then
-----				attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as p
-----			then
-----				create l_visitor.make (routine, agent  (ag_node: AST_EIFFEL; ag_alias_graph: ALIAS_GRAPH)
-----					do
-----						if ag_node.breakpoint_slot = 0 then
-----							(create {ETR_BP_SLOT_INITIALIZER}).init_with_context (routine.e_feature.ast, routine.written_class)
-----						end
-----						if index = ag_node.breakpoint_slot then
-----								--Io.put_string ("Taking report before " + ag_node.generator + " (slot " + index.out + ").%N")
-----							as_string := ag_alias_graph.to_string
-----							as_graph := ag_alias_graph.to_graph
-----						end
-----					end)
-----				routine.body.process (l_visitor)
-----			end
---		end
-
 feature {ANY}
 
 	alias_graph: ALIAS_GRAPH
@@ -101,7 +65,6 @@ feature {NONE}
 					if statement_observer /= Void then
 						statement_observer.call (l_item, alias_graph)
 					end
-						--print (alias_graph.to_string)
 					l_item.process (Current)
 				else
 					check
@@ -125,7 +88,6 @@ feature {NONE}
 	process_assign_as (a_node: ASSIGN_AS)
 		do
 			if tracing then
-					--alias_graph.print_vals
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 			end
@@ -287,10 +249,7 @@ feature {NONE}
 			alias_graph.init_cond_branch
 			safe_process (a_node.else_part)
 
-				--			alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
-				--			alias_graph.print_atts_depth (alias_graph.stack_top.locals)
-
-				--Vic: no need to restore the graph: alias_graph.restore_graph
+				--Note: no need to restore the graph: alias_graph.restore_graph
 
 			if tracing then
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
@@ -361,9 +320,12 @@ feature {NONE} -- utilities
 		local
 			l_obj: TWO_WAY_LIST [ALIAS_OBJECT]
 			entities_caller: TWO_WAY_LIST [STRING]
+			dyn_ana: BOOLEAN
 		do
-			if not attached a_node then
-				print ("Void")
+			if tracing then
+				if not attached a_node then
+					print ("Void")
+				end
 			end
 			if attached {VOID_AS} a_node as l_node then
 				--create Result.make_void
@@ -437,41 +399,44 @@ feature {NONE} -- utilities
 									-- this is indeed a qualified call
 								attached System.eiffel_universe.classes_with_name (target.type.name) as l_classes and then l_classes.count > 0
 							then
+								if tracing then
+									print (target.type.name)
+								end
+
 								if l_classes.first.compiled_class.direct_descendants.count >= 1 then
 									alias_graph.init_dyn_bin
+									dyn_ana := True
 									across
 										l_classes.first.compiled_class.direct_descendants as descendant
 									loop
-										io.new_line
-										print ("Descendant class: ")
-										print (descendant.item.name)
-										io.new_line
-										print ("Feature name: ")
-										print (l_routine.e_feature.name_32)
+										if tracing then
+											io.new_line
+											print ("Descendant class: ")
+											print (descendant.item.name)
+											io.new_line
+											print ("Feature name: ")
+											print (l_routine.e_feature.name_32)
+										end
 
 										if attached {PROCEDURE_I} descendant.item.feature_named_32 (l_routine.e_feature.name_32) as l_r then
-											io.new_line
-											print (l_r.e_feature.name_32)
-											io.new_line
 											if tracing then
+												io.new_line
+												print (l_r.e_feature.name_32)
+												io.new_line
 												alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 												alias_graph.print_atts_depth (alias_graph.stack_top.locals)
+												stop (355)
 											end
-											stop (355)
 											alias_graph.init_feature_version
 											Result := call_routine (a_target, l_r, l_node.parameters, target.entity)
-											show_graph
 											alias_graph.restore_graph_dyn
-											show_graph
 										end
 									end
 								end
 							end
 							Result := call_routine (a_target, l_routine, l_node.parameters, if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [STRING]}.make end)
-							if alias_graph.is_dyn_bin then
-								show_graph
+							if alias_graph.is_dyn_bin and dyn_ana then
 								alias_graph.finalising_dyn_bind
-								show_graph
 							end
 						end
 					end
@@ -492,12 +457,29 @@ feature {NONE} -- utilities
 						l_obj.force (create {ALIAS_OBJECT}.make (l_target.type))
 						l_target.alias_object := l_obj
 					end
-
-					if attached l_target.alias_object as objs and then objs.count > 0 and then objs.first.type.is_basic then
-						if attached System.eiffel_universe.classes_with_name (objs.first.type.name) as l_classes and then l_classes.count > 0 then
+					if tracing then
+						print (attached l_target.alias_object as objs and then objs.count > 0)
+						io.new_line
+						print (attached l_target.alias_object as objs and then objs.count > 0 and then attached {STRING} objs.first.type)
+						io.new_line
+						if attached l_target.alias_object as objs and then objs.count > 0 then
+							print (objs.first.is_string)
+						end
+					end
+					if
+						attached l_target.alias_object as objs and then objs.count > 0
+						and then
+							(	objs.first.type.is_basic
+							or
+								objs.first.is_string
+							)
+					then
+						if objs.first.type.is_basic and then attached System.eiffel_universe.classes_with_name (objs.first.type.name) as l_classes and then l_classes.count > 0 then
 							create l_obj.make
 							l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_classes.first.compiled_class.class_id)))
 							create Result.make_object (l_obj)
+						else
+							create Result.make_object (objs)
 						end
 					else
 						across
@@ -636,8 +618,10 @@ feature {NONE} -- utilities
 			elseif attached {CLASS_TYPE_AS} a_node as l_node then
 				stop (8)
 					-- TODO
-				if attached System.eiffel_universe.compiled_classes_with_name (l_node.class_name.name_8) as l_classes then -- and then l_classes.count = 1 then
-					print (l_classes.count)
+				if tracing then
+					if attached System.eiffel_universe.compiled_classes_with_name (l_node.class_name.name_8) as l_classes then -- and then l_classes.count = 1 then
+						print (l_classes.count)
+					end
 				end
 			end
 			if Result = Void then
@@ -728,15 +712,6 @@ feature {NONE} -- utilities
 					alias_graph.stack_top.alias_pos_rec.printing_vars (1)
 				end
 				alias_graph.stack_push (if a_target /= Void then a_target else alias_graph.stack_top.current_object end, a_routine, entity, if a_target = Void then False else True end)
-				if tracing then
-					io.new_line
-						--				across
-						--					alias_graph.stack_top.caller_path as p
-						--				loop
-						--					print (p.item + ".")
-						--				end
-					io.new_line
-				end
 				across
 					l_params as c
 				loop
@@ -751,12 +726,14 @@ feature {NONE} -- utilities
 					stop (150)
 				elseif a_routine.access_class.name ~ "ANY" then
 						-- ToDo: implement all "hacks"
-					io.new_line
-					stop (123)
-					print ("ANY Class")
-					io.new_line
-					print (a_routine.e_feature.name_32)
-					io.new_line
+					if tracing then
+						io.new_line
+						stop (123)
+						print ("ANY Class")
+						io.new_line
+						print (a_routine.e_feature.name_32)
+						io.new_line
+					end
 				elseif a_routine.access_class.name ~ "SPECIAL" or a_routine.is_external then
 						-- external features do not have implementation information.
 						-- they should have additional information in the form of

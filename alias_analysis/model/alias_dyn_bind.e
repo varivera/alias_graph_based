@@ -48,6 +48,9 @@ feature -- Managing Feature Versions
 					end
 					restore_added (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
 						--restore_added (objs, values.key, values.item.path, 1, values.item.obj)
+					if tracing then
+						print_atts_depth (root.current_object.attributes)
+					end
 				end
 				additions.forth
 			end
@@ -134,6 +137,17 @@ feature -- Managing Feature Versions
 					if c_objs.has (n_o.item) then
 						c_objs.search (n_o.item)
 						c_objs.remove
+						if tracing then
+							print_atts_depth (current_object.attributes)
+							if c_objs = Void then
+								io.new_line
+								print ("Void")
+							end
+							if current_object.attributes.at (name_entity) = Void then
+								io.new_line
+								print ("Void")
+							end
+						end
 					end
 					if tracing then
 						print (name_entity)

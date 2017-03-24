@@ -175,9 +175,9 @@ feature {NONE}
 			print (alias_analysis_runner.as_graph)
 			io.new_line;
 
---			create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
---			output_file.put_string  (alias_analysis_runner.as_graph)
---			output_file.close;
+			create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+			output_file.put_string  (alias_analysis_runner.as_graph)
+			output_file.close;
 
 --			create e
 --			e.system ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\t1.bat")
@@ -196,9 +196,9 @@ feature {NONE}
 --					"c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\output.png"
 --				)
 
-			(create {EXECUTION_ENVIRONMENT}).launch (
-					"echo %"" + alias_analysis_runner.as_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
-				)
+--			(create {EXECUTION_ENVIRONMENT}).launch (
+--					"echo %"" + alias_analysis_runner.as_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
+--				)
 		end
 
 invariant

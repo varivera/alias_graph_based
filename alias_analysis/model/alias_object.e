@@ -88,6 +88,15 @@ feature {ANY}
 			end
 		end
 
+	is_string: BOOLEAN
+			-- is the ALIAS_OBJECT a STRING?
+			--TODO: to find out a better way
+		do
+			if attached {CL_TYPE_A} type then
+				Result := type.base_class.name.starts_with ("STRING")
+			end
+		end
+
 feature -- TODELETE
 
 	out2: STRING_8

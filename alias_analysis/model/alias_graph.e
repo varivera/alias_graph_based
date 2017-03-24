@@ -445,8 +445,10 @@ feature -- Managing Conditionals
 	restore_graph
 			-- restores the alias graph as it was before the current conditional branch
 		do
-			print_atts_depth (stack_top.current_object.attributes)
-			print_atts_depth (stack_top.locals)
+			if tracing then
+				print_atts_depth (stack_top.current_object.attributes)
+				print_atts_depth (stack_top.locals)
+			end
 			alias_cond.restoring_state (stack.first, stack_top)
 		end
 
@@ -645,11 +647,15 @@ feature -- Managing possible Dyn Bind
 	restore_graph_dyn
 			-- restores the alias graph as it was before the current feature version
 		do
-			print_atts_depth (stack_top.current_object.attributes)
-			print_atts_depth (stack_top.locals)
+			if tracing then
+				print_atts_depth (stack_top.current_object.attributes)
+				print_atts_depth (stack_top.locals)
+			end
 			alias_dyn.restoring_state (stack.first, stack_top)
-			print_atts_depth (stack_top.current_object.attributes)
-			print_atts_depth (stack_top.locals)
+			if tracing then
+				print_atts_depth (stack_top.current_object.attributes)
+				print_atts_depth (stack_top.locals)
+			end
 		end
 
 	finalising_dyn_bind

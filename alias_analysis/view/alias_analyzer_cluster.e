@@ -67,7 +67,8 @@ feature {NONE}
 				c.classes as cla
 			loop
 				if not cla.item.actual_class.name.starts_with ("MML_") and
-					not (cla.item.actual_class.name ~ "V_STRING_INPUT") then
+					not (cla.item.actual_class.name ~ "V_STRING_INPUT") and
+					not (cla.item.actual_class.name ~ "V_DEFAULT") then
 					if System.eiffel_universe.classes_with_name (cla.item.actual_class.name).count = 1 then
 						print ("Class being analysed: ")
 						print (cla.item.actual_class.name)

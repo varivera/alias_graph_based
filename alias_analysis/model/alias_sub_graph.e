@@ -194,8 +194,11 @@ feature -- Updating
 			across
 				locals as l
 			loop
-				print (l.item)
-				io.new_line
+				if tracing then
+					print (l.item)
+					io.new_line
+				end
+
 				if not (l.item ~ "Result") then
 					if additions.count > 0 then
 						additions.last.remove (l.item)
@@ -421,14 +424,29 @@ feature -- Managing merging nodes (for loops and recursion)
 						io.new_line
 					end
 				end
+
+				if tracing then
+					print_atts_depth (current_object.attributes)
+					io.new_line
+					print (name_entity)
+					io.new_line
+					if current_object.attributes.at (name_entity) = Void then
+						io.new_line
+						print ("Void")
+					end
+				end
+
 					-- the variable should exist (no need to check)
 				if name_entity.ends_with ("_Result") then
 					c_objs := current_routine.locals.at ("Result")
 				elseif current_routine.locals.has (name_entity) then
 					c_objs := current_routine.locals.at (name_entity)
-				elseif current_routine.current_object.attributes.has (name_entity) then
-					c_objs := current_routine.current_object.attributes.at (name_entity)
+				elseif current_object.attributes.has (name_entity) then
+					c_objs := current_object.attributes.at (name_entity)
 				else
+--				elseif current_routine.current_object.attributes.has (name_entity) then
+--					c_objs := current_routine.current_object.attributes.at (name_entity)
+--				else
 
 				end
 				across
@@ -595,7 +613,7 @@ feature --{NONE} -- To Delete
 									print (", ")
 								end
 							end
-							
+
 							print ("] abs_name: ")
 							print (pair_add.item.abs_name)
 							print ("%N")
