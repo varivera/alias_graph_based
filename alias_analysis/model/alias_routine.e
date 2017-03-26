@@ -13,33 +13,37 @@ create {ALIAS_GRAPH}
 feature {NONE}
 
 	make (a_current_object: like current_object; a_routine: like routine; a_locals: like locals;
-					a_caller_path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]])
+					a_caller_path: like caller_path; a_caller_locals: like caller_locals)
 		require
 			a_current_object /= Void
 			a_routine /= Void
 			a_locals /= Void
 			a_caller_path /= Void
+			a_caller_locals /= Void
 		do
 			current_object := a_current_object
 			routine := a_routine
 			locals := a_locals
 			caller_path := a_caller_path
+			caller_locals := a_caller_locals
 			create alias_pos_rec.make
 
-				-- testing
 			create map_funct.make (0)
 		ensure
 			current_object = a_current_object
 			routine = a_routine
 			locals = a_locals
 			caller_path = a_caller_path
+			caller_locals = a_caller_locals
 		end
 
 feature {ANY}
 
 	current_object: ALIAS_OBJECT
+			-- contains the class attributes of the current object
 
 	routine: PROCEDURE_I
+			-- refers to the routine the current object is in
 
 	caller_path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]
 			-- holds the entities of the objects which called Current routine
@@ -58,6 +62,10 @@ feature {ANY}
 			--					end
 			--				end
 			-- 'set_x' is being called from 'v' and 'w': [[previous], [v,w]]
+
+	caller_locals: TWO_WAY_LIST [TWO_WAY_LIST [like locals]]
+			-- holds the locals of the objects which called Current routine
+			-- on locals since attributes can be reached from the alias_graph
 
 	alias_pos_rec: ALIAS_REC
 			-- manages edges and nodes of the graph in case of fixpoint by recursion
@@ -79,6 +87,7 @@ invariant
 	routine /= Void
 	current_object /= Void
 	caller_path /= Void
+	caller_locals /= Void
 
 note
 	copyright: "Copyright (c) 1984-2017, Eiffel Software"

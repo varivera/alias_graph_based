@@ -19,14 +19,12 @@ feature {NONE}
 			create alias_loop.make
 			create alias_dyn.make
 			create stack.make
-			stack_push (create {ALIAS_OBJECT}.make (a_routine.written_class.actual_type), a_routine, create {TWO_WAY_LIST [STRING]}.make, False)
+			stack_push (create {ALIAS_OBJECT}.make (a_routine.written_class.actual_type), a_routine,
+						Void, Void, False)
 			if tracing then
 				print_atts_depth (stack_top.current_object.attributes)
 				print_atts_depth (stack_top.locals)
 			end
-
-				--				-- to retrieve the class in which a_routine is
-				--			class_atts (a_routine)
 		ensure
 			stack /= Void
 			stack.count = 1
@@ -40,21 +38,81 @@ feature
 			Result := stack.last
 		end
 
-	stack_push (a_current_object: ALIAS_OBJECT; a_routine: PROCEDURE_I; ent: TWO_WAY_LIST [STRING]; qualified_call: BOOLEAN)
+	stack_push (a_current_object: ALIAS_OBJECT; a_routine: PROCEDURE_I;
+				ent: TWO_WAY_LIST [STRING];
+				ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]; qualified_call: BOOLEAN)
 			-- adds a context `a_routine' to the ALIAS_GRAPH having a ref to `a_current_object'
 			--  routine `a_routine' was called from entity `ent' in `qualified_call'
 		local
 			l_ent: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]
+			l_local_ent: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]
 		do
 			if stack.count > 1 then
 				l_ent := stack.last.caller_path.twin
+				l_local_ent := stack.last.caller_locals.twin
+--				if across ent as e some stack_top.locals.has (e.item) end then
+--						-- TODO: only taking into account arguments, there's a need
+--						-- 		to expand the implementation to take care of local vars (e.g. Result)
+--						-- Note: this is a temporal solution
+--					if tracing then
+--						across
+--							stack_top.locals.at (ent.first).first.entity as e
+--						loop
+--							io.new_line
+--							print (e.item)
+--						end
+--						across
+--							1 |..| stack.count as i
+--						loop
+--							across
+--								stack.at (stack.count - i.item + 1).current_object.attributes as atts
+--							loop
+--								if atts.item.has (stack_top.locals.at (ent.first).first) then
+--									print (atts.key)
+--									io.new_line
+--									-- TODO: put both coursor to the end so not to iterate any more
+--								end
+--							end
+--						end
+--						across
+--							l_ent as e
+--						loop
+--							io.new_line
+--							print (e.item)
+--						end
+--					end
+--					across
+--						1 |..| stack.count as i
+--					loop
+--						across
+--							stack.at (stack.count - i.item + 1).current_object.attributes as atts
+--						loop
+--							if atts.item.has (stack_top.locals.at (ent.first).first) then
+--								create name.make_from_string (atts.key)
+--								-- TODO: put both coursor to the end so not to iterate any more
+--							end
+--						end
+--					end
+--				end
+--				if attached name as n and then not n.is_empty then
+--					l_ent.move (l_ent.count)
+--					l_ent.remove
+--					ent.wipe_out
+--					ent.force (name)
+--				else
+--					print ("Empty")
+--				end
 			else
 				create l_ent.make
+				create l_local_ent.make
 			end
 			if qualified_call then
 				l_ent.extend (ent)
+				l_local_ent.extend (ent_local)
 			end
-			stack.extend (create {ALIAS_ROUTINE}.make (a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]}.make (16), l_ent))
+			stack.extend (create {ALIAS_ROUTINE}.make (
+						a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]}.make (16),
+						l_ent, l_local_ent))
 
 				-- to retrieve the class in which a_routine is
 			if qualified_call or stack.count = 1 then
@@ -477,18 +535,30 @@ feature -- Managing Conditionals
 				end
 			end
 			if is_conditional_branch then
-				alias_cond.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object, if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end, if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
+				alias_cond.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
+					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]}.make end,
+					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
 			end
 			if is_loop_iter then
-				alias_loop.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object, if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end, if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
+				alias_loop.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
+					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]}.make end,
+					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
 			end
 
 			if is_dyn_bin then
-				alias_dyn.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object, if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end, if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
+				alias_dyn.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
+					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]}.make end,
+					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
 			end
 
 				-- in case of recursion
-			stack_top.alias_pos_rec.updating_a_d (target.variable_name, source.variable_name, target.alias_object, source.alias_object, if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end, if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
+			stack_top.alias_pos_rec.updating_a_d (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
+					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]}.make end,
+					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
 		end
 
 		--forget_att (target: ALIAS_OBJECT_INFO)
@@ -599,7 +669,8 @@ feature -- Managing Recursion
 	rec_last_locals: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]
 			-- points to the last locals in a previous recursive call
 
-	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]]
+	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+												path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]]
 			-- additions and deletions of the previous recursive calls.
 			-- TODO: To improve
 
@@ -617,7 +688,8 @@ feature -- Managing Recursion
 			stack_top.alias_pos_rec.finalising_recursive_call (stack.first, stack_top, pre_add, pre_del)
 		end
 
-	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]
+	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+										path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]
 			-- returns the entities to be added to deletion after a conditional
 		do
 			Result := alias_cond.inter_deletion

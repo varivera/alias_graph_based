@@ -37,15 +37,19 @@ feature -- Updating
 			end
 		end
 
-	updating_A_D (target_name, source_name: STRING; target_object, source_object: TWO_WAY_LIST [ALIAS_OBJECT]; target_path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; routine_name: STRING)
+	updating_A_D (target_name, source_name: STRING; target_object, source_object: TWO_WAY_LIST [ALIAS_OBJECT];
+						target_path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+						target_path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]];
+						routine_name: STRING)
 			-- updates the sets `additions' and `deletions' accordingly:
-			--	additions -> [`target_name': (`source_name', `source_object', `target_path')]
-			--  deletions -> [`target_name': (`source_name', `source_object', `target_path')]
+			--	additions -> [`target_name': (`source_name', `source_object', `target_path', `path_locals')]
+			--  deletions -> [`target_name': (`source_name', `source_object', `target_path', `path_locals')]
 			-- `routine_name' is needed to identified local variables from different features inside the same the class
 		require
 			is_in_structure
 		local
-			tup: TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]]
+			tup: TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+									locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]]
 			obj: TWO_WAY_LIST [ALIAS_OBJECT]
 		do
 			stop2 (0)
@@ -236,8 +240,10 @@ feature -- Managing Branches
 		require
 			is_in_structure
 		do
-			additions.force (create {HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]}.make (0))
-			deletions.force (create {HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]}.make (0))
+			additions.force (create {HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+									path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]}.make (0))
+			deletions.force (create {HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+									path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]}.make (0))
 		end
 
 	finalising (root, current_routine: ALIAS_ROUTINE)
@@ -377,8 +383,6 @@ feature -- Managing merging nodes (for loops and recursion)
 
 	add_deleted_links (root, current_routine: ALIAS_ROUTINE)
 			-- restore the graph by given back the deleted links
-		local
-			objs: ALIAS_OBJECT
 		do
 			if tracing then
 				printing_vars (1)
@@ -429,7 +433,11 @@ feature -- Managing merging nodes (for loops and recursion)
 				if tracing then
 					print_atts_depth (current_object.attributes)
 					io.new_line
+					print_atts_depth (current_routine.locals)
+					io.new_line
 					print (name_entity)
+					io.new_line
+					print (current_object.attributes.count)
 					io.new_line
 					if current_object.attributes.at (name_entity) = Void then
 						io.new_line
@@ -478,17 +486,21 @@ feature -- Managing merging nodes (for loops and recursion)
 feature -- Access
 	--TODO: to create a class with this structure
 
-	additions: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]]
+	additions: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+											path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]];
+
 			-- stores the edges added by a step (A_i in the def): the key is the name of the entity to be added (it contains all path)
 			-- `name': name of the entity to point at
 			-- `obj': object that `name' is pointing at
 			-- `path': path of the entity e.g. Current.v.[w,x]...
+			-- `path_locals': contains the local variables of the callers (in case of need)
 
-	deletions: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]]
+	deletions: like additions
 			-- stores the edges deleted by a step (D_i in the def): the key is the name of the entity to be deleted (it contains all path)
 			-- `name': name of the entity it was pointing at
 			-- `obj': object that `name' it was pointing at
 			-- `path': path of the entity e.g. Current.v.[w,x]...
+			-- `path_locals': contains the local variables of the callers (in case of need)
 
 	indexes: TWO_WAY_LIST [TUPLE [index_add, index_del: INTEGER]]
 			-- stores for each step index: the number of additions and deletions

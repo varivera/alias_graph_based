@@ -172,8 +172,6 @@ feature {NONE} -- Helpers
 			-- from {ALIAS_SUB_GRAPH}
 			-- it changes its behaviour if the loop is inside a condtional: in such case
 			-- `add_deleted_links' also adds them to the conditional additions
-		local
-			objs: ALIAS_OBJECT
 		do
 			if tracing then
 				printing_vars (1)

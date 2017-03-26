@@ -91,8 +91,19 @@ feature {ANY}
 					-- do not perform any action if the object is expanded
 
 			elseif a_alias_object = Void then
-				alias_object := Void
-				variable_map.remove (variable_name)
+				--alias_object := Void
+				--variable_map.remove (variable_name)
+				create l_obj.make
+				l_obj.force (create {ALIAS_OBJECT}.make_void)
+				alias_object := l_obj
+				if tracing then
+					print_atts_depth (variable_map)
+				end
+				variable_map [variable_name] := l_obj
+				if tracing then
+					print_atts_depth (variable_map)
+				end
+
 			else
 				a_alias_object.start
 				if a_alias_object.item.type.is_expanded then

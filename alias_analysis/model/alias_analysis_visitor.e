@@ -140,7 +140,8 @@ feature {NONE}
 				loop
 					create entity_caller.make
 					entity_caller.force (l_foo.variable_name)
-					call_routine_with_arg (aliases.item, l_set_bar2, a_node.source, entity_caller).do_nothing
+					aliases.item.entity := entity_caller
+					call_routine_with_arg (aliases.item, l_set_bar2, a_node.source).do_nothing
 				end
 			else
 				Io.put_string ("Not yet supported (2): " + code (a_node) + "%N")
@@ -177,8 +178,7 @@ feature {NONE}
 							.feature_of_rout_id
 							(System.class_of_id (l_classes.first.compiled_class.class_id).creation_feature.e_feature.rout_id_set.first) as l_r
 						then
-							call_routine (aliases.item, l_r, Void,
-									aliases.item.entity).do_nothing
+							call_routine (aliases.item, l_r, Void).do_nothing
 						end
 						stop (200)
 					end
@@ -340,6 +340,10 @@ feature {NONE} -- utilities
 				create l_obj.make
 				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.integer_32_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
+			elseif attached {BOOL_AS} a_node as l_node then
+				create l_obj.make
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.boolean_class.compiled_class.class_id)))
+				create Result.make_object (l_obj)
 			elseif attached {STRING_AS} a_node as l_node then
 				create l_obj.make
 				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.string_8_class.compiled_class.class_id)))
@@ -462,14 +466,16 @@ feature {NONE} -- utilities
 												stop (355)
 											end
 											alias_graph.init_feature_version
-											Result := call_routine (a_target, l_r, l_node.parameters, target.entity)
+											Result := call_routine (a_target, l_r, l_node.parameters)
 											alias_graph.restore_graph_dyn
 										end
 									end
 								end
 							end
-							alias_graph.init_feature_version
-							Result := call_routine (a_target, l_routine, l_node.parameters, if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [STRING]}.make end)
+							if alias_graph.is_dyn_bin and dyn_ana then
+								alias_graph.init_feature_version
+							end
+							Result := call_routine (a_target, l_routine, l_node.parameters)
 							if alias_graph.is_dyn_bin and dyn_ana then
 								alias_graph.finalising_dyn_bind
 							end
@@ -481,7 +487,8 @@ feature {NONE} -- utilities
 						alias_graph.update_class_atts (target.type.base_class, target.attributes)
 					end
 						-- attribute
-					create Result.make_variable (alias_graph.stack_top.routine, (if a_target /= Void then a_target else alias_graph.stack_top.current_object end).attributes, l_node.access_name_8)
+					create Result.make_variable (alias_graph.stack_top.routine,
+											(if a_target /= Void then a_target else alias_graph.stack_top.current_object end).attributes, l_node.access_name_8)
 				end
 			elseif attached {NESTED_AS} a_node as l_node then
 				stop (1)
@@ -529,6 +536,13 @@ feature {NONE} -- utilities
 									io.new_line
 								end
 								entities_caller.force (l_target.variable_name)
+
+								-- TODO: to ask for argument
+								if tracing then
+									stop (-1)
+									print (alias_graph.stack_top.locals.has (l_target.variable_name))
+								end
+
 								aliasses.item.entity := entities_caller
 							end
 							Result := get_alias_info (aliasses.item, l_node.message)
@@ -551,7 +565,7 @@ feature {NONE} -- utilities
 						across
 							l_target.alias_object as aliases
 						loop
-							Result := call_routine_with_arg (aliases.item, l_routine, l_node.right, if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [STRING]}.make end)
+							Result := call_routine_with_arg (aliases.item, l_routine, l_node.right)
 						end
 					end
 				end
@@ -607,7 +621,7 @@ feature {NONE} -- utilities
 							create Result.make_object (l_obj)
 						else
 							stop (126)
-							Result := call_routine (aliasses.item, l_routine, l_node.operands, aliasses.item.entity)
+							Result := call_routine (aliasses.item, l_routine, l_node.operands)
 						end
 						aliasses.item.entity := create {TWO_WAY_LIST [STRING]}.make
 					end
@@ -660,7 +674,7 @@ feature {NONE} -- utilities
 				end
 				io.new_line
 				print (n)
-				if n = 600 then
+				if n = -1 then
 					print (n)
 				end
 				io.new_line
@@ -685,7 +699,7 @@ feature {NONE} -- utilities
 			end
 		end
 
-	call_routine_with_arg (a_target: ALIAS_OBJECT; a_routine: PROCEDURE_I; a_arg: EXPR_AS; entity: TWO_WAY_LIST [STRING]): ALIAS_OBJECT_INFO
+	call_routine_with_arg (a_target: ALIAS_OBJECT; a_routine: PROCEDURE_I; a_arg: EXPR_AS): ALIAS_OBJECT_INFO
 		require
 			a_routine /= Void
 			a_arg /= Void
@@ -694,10 +708,10 @@ feature {NONE} -- utilities
 		do
 			create l_params.make (1)
 			l_params.extend (a_arg)
-			Result := call_routine (a_target, a_routine, l_params, entity)
+			Result := call_routine (a_target, a_routine, l_params)
 		end
 
-	call_routine (a_target: ALIAS_OBJECT; a_routine: PROCEDURE_I; a_params: EIFFEL_LIST [EXPR_AS]; entity: TWO_WAY_LIST [STRING]): ALIAS_OBJECT_INFO
+	call_routine (a_target: ALIAS_OBJECT; a_routine: PROCEDURE_I; a_params: EIFFEL_LIST [EXPR_AS]): ALIAS_OBJECT_INFO
 		require
 			a_routine /= Void
 		local
@@ -705,6 +719,7 @@ feature {NONE} -- utilities
 			may_alising_external: TWO_WAY_LIST [STRING]
 			alias_a, alias_b: STRING
 			objs: ALIAS_OBJECT
+			ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]
 		do
 				-- before making the call: check if recursion, if so, check for Fix Point
 			alias_graph.check_recursive_fix_point (a_routine.feature_name_32)
@@ -712,6 +727,20 @@ feature {NONE} -- utilities
 				alias_graph.finalising_recursion
 				create Result.make_variable (alias_graph.stack_top.routine, alias_graph.rec_last_locals, "Result")
 			else
+				if tracing then
+					if a_routine.e_feature.name_32 ~ "tt3" then
+						alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
+						alias_graph.print_atts_depth (alias_graph.stack_top.locals)
+						if attached a_target as t then
+							across
+								t.entity as e
+							loop
+								io.new_line
+								print (e.item)
+							end
+						end
+					end
+				end
 				create l_params.make
 				if a_params /= Void then
 					across
@@ -720,7 +749,18 @@ feature {NONE} -- utilities
 						l_params.extend (get_alias_info (Void, c.item))
 					end
 				end
-				alias_graph.stack_push (if a_target /= Void then a_target else alias_graph.stack_top.current_object end, a_routine, entity, if a_target = Void then False else True end)
+				if a_target /= Void then
+						-- qualified call
+					create ent_local.make
+					ent_local.force (alias_graph.stack_top.locals)
+				end
+
+				alias_graph.stack_push (
+						if a_target /= Void then a_target else alias_graph.stack_top.current_object end,
+						a_routine,
+						if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [STRING]}.make end,
+						ent_local,
+						a_target /= Void)
 				across
 					l_params as c
 				loop

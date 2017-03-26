@@ -34,6 +34,7 @@ feature {NONE}
 				attributes.force (l_obj, "items")
 			end
 			create entity.make
+			create entity_local.make
 		ensure
 			type = a_type
 			attributes /= Void
@@ -47,6 +48,7 @@ feature {NONE}
 			create {VOID_A} type
 			create attributes.make (16)
 			create entity.make
+			create entity_local.make
 		ensure
 			type = Void
 			attributes /= Void
@@ -61,6 +63,7 @@ feature {NONE}
 			type := a_type
 			attributes := a_atts
 			create entity.make
+			create entity_local.make
 		ensure
 			type = a_type
 			attributes /= Void
@@ -71,12 +74,22 @@ feature {ANY}
 	type: TYPE_A
 
 	entity: TWO_WAY_LIST [STRING] assign set_entity
-			-- momentarity
+			-- entity that called the Object
+
+	entity_local: TWO_WAY_LIST [like attributes] assign set_entity_local
+			-- stores the local attributes of the entity that called the current object
+
 feature {ANY}
 
 	set_entity (name: TWO_WAY_LIST [STRING])
 		do
 			entity := name
+		end
+
+	set_entity_local (ent_local: TWO_WAY_LIST [like attributes])
+			-- sets the entity_local variable
+		do
+			entity_local := ent_local
 		end
 
 	out: STRING_8
