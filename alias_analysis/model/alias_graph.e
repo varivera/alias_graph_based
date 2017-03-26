@@ -650,9 +650,11 @@ feature -- Managing possible Dyn Bind
 			if tracing then
 				print_atts_depth (stack_top.current_object.attributes)
 				print_atts_depth (stack_top.locals)
+				alias_dyn.printing_vars (1)
 			end
 			alias_dyn.restoring_state (stack.first, stack_top)
 			if tracing then
+				alias_dyn.printing_vars (1)
 				print_atts_depth (stack_top.current_object.attributes)
 				print_atts_depth (stack_top.locals)
 			end
@@ -661,6 +663,9 @@ feature -- Managing possible Dyn Bind
 	finalising_dyn_bind
 			-- finalises the operations of feature versions
 		do
+			if tracing then
+				alias_dyn.printing_vars(1)
+			end
 			alias_dyn.finalising_dyn_bind (stack.first, stack_top)
 		end
 

@@ -402,7 +402,7 @@ feature {NONE} -- utilities
 								if tracing then
 									print (target.type.name)
 								end
-
+								stop (601)
 								if l_classes.first.compiled_class.direct_descendants.count >= 1 then
 									alias_graph.init_dyn_bin
 									dyn_ana := True
@@ -417,8 +417,42 @@ feature {NONE} -- utilities
 											print ("Feature name: ")
 											print (l_routine.e_feature.name_32)
 										end
+											-- find the right feature name i.e. whether it was renamed
+--										l_classes.first.compiled_class.direct_descendants.item.changed_features. .start
+--										l_classes.first.compiled_class.direct_descendants.item.changed_features.item_for_iteration.
+--										l_routine
 
+--										l_classes.first.compiled_class.direct_descendants.item.feature_of_name_id (a_name_id: INTEGER_32)
+--										l_classes.first.compiled_class.direct_descendants.item.feature_table.item_for_iteration.e_feature.name_32
+
+										if tracing then
+											io.new_line
+											print (l_routine.e_feature.name_32)
+											io.new_line
+											if attached {PROCEDURE_I} descendant.item.feature_of_name_id (l_routine.e_feature.name_id) as l_r then
+												print (l_r.e_feature.name_32)
+											end
+											io.new_line
+											print (attached descendant.item.actual_type.renaming)
+
+--											l_classes.first.compiled_class.direct_descendants.item.feature_table.item_for_iteration.
+
+
+										end
+
+--										across
+--											descendant.item.changed_features as t
+--										loop
+--											if tracing then
+--												io.new_line
+--												print (t.key)
+--												print (" as ")
+--												print (t.item)
+--											end
+
+--										end
 										if attached {PROCEDURE_I} descendant.item.feature_named_32 (l_routine.e_feature.name_32) as l_r then
+--										if attached {PROCEDURE_I} descendant.item.feature_with_feature_id (l_routine.e_feature.feature_id) as l_r then
 											if tracing then
 												io.new_line
 												print (l_r.e_feature.name_32)
@@ -434,6 +468,7 @@ feature {NONE} -- utilities
 									end
 								end
 							end
+							alias_graph.init_feature_version
 							Result := call_routine (a_target, l_routine, l_node.parameters, if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [STRING]}.make end)
 							if alias_graph.is_dyn_bin and dyn_ana then
 								alias_graph.finalising_dyn_bind
@@ -456,15 +491,6 @@ feature {NONE} -- utilities
 						create l_obj.make
 						l_obj.force (create {ALIAS_OBJECT}.make (l_target.type))
 						l_target.alias_object := l_obj
-					end
-					if tracing then
-						print (attached l_target.alias_object as objs and then objs.count > 0)
-						io.new_line
-						print (attached l_target.alias_object as objs and then objs.count > 0 and then attached {STRING} objs.first.type)
-						io.new_line
-						if attached l_target.alias_object as objs and then objs.count > 0 then
-							print (objs.first.is_string)
-						end
 					end
 					if
 						attached l_target.alias_object as objs and then objs.count > 0
@@ -505,14 +531,6 @@ feature {NONE} -- utilities
 								entities_caller.force (l_target.variable_name)
 								aliasses.item.entity := entities_caller
 							end
-								-- take care of 'dynamic binding'
-
---							if attached System.eiffel_universe.classes_with_name (aliasses.item.type.name) as l_classes and then l_classes.count > 0 then
---								l_classes.first
-
---								asd
---							end
-
 							Result := get_alias_info (aliasses.item, l_node.message)
 							aliasses.item.entity := create {TWO_WAY_LIST [STRING]}.make
 						end
@@ -642,7 +660,7 @@ feature {NONE} -- utilities
 				end
 				io.new_line
 				print (n)
-				if n = 333 then
+				if n = 600 then
 					print (n)
 				end
 				io.new_line
@@ -686,6 +704,7 @@ feature {NONE} -- utilities
 			l_params: TWO_WAY_LIST [ALIAS_OBJECT_INFO]
 			may_alising_external: TWO_WAY_LIST [STRING]
 			alias_a, alias_b: STRING
+			objs: ALIAS_OBJECT
 		do
 				-- before making the call: check if recursion, if so, check for Fix Point
 			alias_graph.check_recursive_fix_point (a_routine.feature_name_32)
@@ -701,16 +720,6 @@ feature {NONE} -- utilities
 						l_params.extend (get_alias_info (Void, c.item))
 					end
 				end
-				if tracing then
-					across
-						entity as ent
-					loop
-						io.new_line
-						print (ent.item)
-					end
-					io.new_line
-					alias_graph.stack_top.alias_pos_rec.printing_vars (1)
-				end
 				alias_graph.stack_push (if a_target /= Void then a_target else alias_graph.stack_top.current_object end, a_routine, entity, if a_target = Void then False else True end)
 				across
 					l_params as c
@@ -718,9 +727,6 @@ feature {NONE} -- utilities
 					(create {ALIAS_OBJECT_INFO}.make_variable (alias_graph.stack_top.routine, alias_graph.stack_top.locals, a_routine.arguments.item_name (c.target_index))).alias_object := c.item.alias_object
 				end
 				stop (11)
-				if tracing then
-					print (">>> " + a_routine.access_class.name)
-				end
 				if a_routine.e_feature.name_32 ~ "out" then
 					alias_by_external ("Result", "+")
 					stop (150)
@@ -733,6 +739,64 @@ feature {NONE} -- utilities
 						io.new_line
 						print (a_routine.e_feature.name_32)
 						io.new_line
+					end
+
+					stop (600)
+					if a_routine.e_feature.name_32 ~ "copy" then
+							-- Implementation of copy:
+--							a.copy (b)
+--								create a
+--								for_all atts in a ==> add the alias objects in b
+						if tracing then
+							alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
+							alias_graph.print_atts_depth (alias_graph.stack_top.locals)
+						end
+
+						alias_graph.update_class_atts (alias_graph.stack_top.locals.at ("other").first.type.base_class, alias_graph.stack_top.locals.at ("other").first.attributes)
+
+						across
+							alias_graph.stack_top.locals.at ("other").first.attributes as atts
+									-- note: from ANY class the name will always be 'other'
+						loop
+								-- wipe out all elements (if any)
+							a_target.attributes.force (create {TWO_WAY_LIST [ALIAS_OBJECT]}.make, atts.key)
+							if tracing then
+								print (atts.key)
+								print (" n: ")
+								print (atts.item.count)
+								io.new_line
+							end
+							across atts.item as to_copy
+							loop
+								a_target.attributes.at (atts.key).force (to_copy.item)
+							end
+						end
+					elseif a_routine.e_feature.name_32 ~ "twin" then
+							-- Implementation of twin:
+--							a := b.twin -> the semantics are:
+--													create a
+--													a.copy (b)
+						if tracing then
+							alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
+							alias_graph.print_atts_depth (alias_graph.stack_top.locals)
+						end
+
+						alias_graph.update_class_atts (a_target.type.base_class, a_target.attributes)
+
+						alias_graph.stack_top.locals.force (create {TWO_WAY_LIST [ALIAS_OBJECT]}.make, "Result")
+						create objs.make (a_target.type)
+						across
+							a_target.attributes as vars
+						loop
+							objs.attributes.force (create {TWO_WAY_LIST [ALIAS_OBJECT]}.make, vars.key)
+							across
+								vars.item as oo
+							loop
+								objs.attributes.at (vars.key).force (oo.item)
+							end
+						end
+
+						alias_graph.stack_top.locals.at ("Result").force (objs)
 					end
 				elseif a_routine.access_class.name ~ "SPECIAL" or a_routine.is_external then
 						-- external features do not have implementation information.

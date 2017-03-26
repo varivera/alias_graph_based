@@ -1,6 +1,6 @@
 note
 	description: "[
-		This class managing sub-alias-graph when need it: the main the functionality to add/delete/restore the Alias graph when the 
+		This class managing sub-alias-graph when need it: the main the functionality to add/delete/restore the Alias graph when the
 		analysis enters in structures such as conditionals, loops, recursions or handling 'dynamic binding'
 		This class provides mechanisms to manipulate the graph and to restore it. Also mechanismos to subsume nodes.
 
@@ -103,7 +103,8 @@ feature -- Updating
 			else
 				tup.name := "Void"
 			end
-			tup.path := target_path.twin
+
+			tup.path := target_path.deep_twin
 			create obj.make
 			stop2 (12)
 			if attached source_object as so then
@@ -151,7 +152,7 @@ feature -- Updating
 				tup.abs_name := tup.abs_name + target_name
 			end
 			tup.name := target_name
-			tup.path := target_path.twin
+			tup.path := target_path.deep_twin
 			create obj.make
 			stop2 (4)
 			if attached target_object as target then
