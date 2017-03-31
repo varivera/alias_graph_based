@@ -63,7 +63,7 @@ feature {NONE}
 			loop
 				if attached a_node.item as l_item then
 					if statement_observer /= Void then
-						statement_observer.call (l_item, alias_graph)
+						statement_call (l_item)
 					end
 					l_item.process (Current)
 				else
@@ -74,6 +74,12 @@ feature {NONE}
 				a_node.forth
 			end
 			a_node.go_i_th (l_cursor)
+		end
+
+	statement_call (l: AST_EIFFEL)
+			-- makes the call to the agent
+		do
+			statement_observer.call (l, alias_graph, Void)
 		end
 
 	process_routine_as (a_node: ROUTINE_AS)
@@ -123,8 +129,46 @@ feature {NONE}
 		local
 			entity_caller: TWO_WAY_LIST [STRING]
 		do
+			if tracing then
+				io.new_line
+				print (attached {BRACKET_AS} a_node.target as l_target1)
+				io.new_line
+				if attached {BRACKET_AS} a_node.target as l_target2 and then
+					attached get_alias_info (Void, l_target2.target) as l_foo then
+
+					print(l_foo.variable_name)
+				end
+				io.new_line
+				if attached {BRACKET_AS} a_node.target as l_target2 and then
+					attached get_alias_info (Void, l_target2.target) as l_foo and then
+					attached find_routine (l_target2) as l_bar
+				then
+					print (l_bar.e_feature.name_32)
+				end
+				io.new_line
+				if attached {BRACKET_AS} a_node.target as l_target2 and then
+					attached get_alias_info (Void, l_target2.target) as l_foo and then
+					attached find_routine (l_target2) as l_bar and then
+					attached l_foo.alias_object.first.type.base_class as l_c and then
+					attached l_c.feature_named_32 (l_bar.e_feature.name_32).assigner_name as l_set_bar1
+				then
+					print (l_set_bar1)
+				end
+				io.new_line
+
+				if attached {BRACKET_AS} a_node.target as l_target2 and then
+					attached get_alias_info (Void, l_target2.target) as l_foo and then
+					attached find_routine (l_target2) as l_bar and then
+					attached l_foo.alias_object.first.type.base_class as l_c and then
+					attached l_c.feature_named_32 (l_bar.e_feature.name_32).assigner_name as l_set_bar1 and then
+					attached {PROCEDURE_I} l_c.feature_named_32 (l_set_bar1) as l_set_bar2
+				then
+					print (l_set_bar2.argument_count)
+				end
+				io.new_line
+			end
 				-- foo.bar := baz  ->  handle as: foo.set_bar(baz)
-			if attached {EXPR_CALL_AS} a_node.target as l_target1 and then -- foo.bar
+			if 	attached {EXPR_CALL_AS} a_node.target as l_target1 and then -- foo.bar
 				attached {NESTED_AS} l_target1.call as l_target2 and then -- foo.bar
 				attached get_alias_info (Void, l_target2.target) as l_foo and then -- foo
 				attached {ACCESS_FEAT_AS} l_target2.message as l_bar and then -- bar
@@ -134,6 +178,23 @@ feature {NONE}
 				attached l_c.feature_named_32 (l_bar.access_name_32).assigner_name as l_set_bar1 and then -- set_bar
 				attached {PROCEDURE_I} l_c.feature_named_32 (l_set_bar1) as l_set_bar2 and then -- set_bar
 				l_set_bar2.argument_count = 1
+			then
+				across
+					l_foo.alias_object as aliases
+				loop
+					create entity_caller.make
+					entity_caller.force (l_foo.variable_name)
+					aliases.item.entity := entity_caller
+					call_routine_with_arg (aliases.item, l_set_bar2, a_node.source).do_nothing
+				end
+			elseif
+				-- foo [bar] := baz
+				attached {BRACKET_AS} a_node.target as l_target2 and then
+				attached get_alias_info (Void, l_target2.target) as l_foo and then
+				attached find_routine (l_target2) as l_bar and then
+				attached l_foo.alias_object.first.type.base_class as l_c and then
+				attached l_c.feature_named_32 (l_bar.e_feature.name_32).assigner_name as l_set_bar1 and then
+				attached {PROCEDURE_I} l_c.feature_named_32 (l_set_bar1) as l_set_bar2
 			then
 				across
 					l_foo.alias_object as aliases
@@ -332,29 +393,25 @@ feature {NONE} -- utilities
 				create l_obj.make
 				l_obj.force (create {ALIAS_OBJECT}.make_void)
 				create Result.make_object (l_obj)
-			elseif attached {CHAR_AS} a_node as l_node then
-				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.character_8_class.compiled_class.class_id)))
-				create Result.make_object (l_obj)
-			elseif attached {INTEGER_AS} a_node as l_node then
-				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.integer_32_class.compiled_class.class_id)))
-				create Result.make_object (l_obj)
-			elseif attached {BOOL_AS} a_node as l_node then
-				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.boolean_class.compiled_class.class_id)))
-				create Result.make_object (l_obj)
 			elseif attached {STRING_AS} a_node as l_node then
 				create l_obj.make
 				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.string_8_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
+			elseif attached {CHAR_AS} a_node as l_node then
+				create l_obj.make
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.character_8_class.compiled_class.class_id)))
+				create Result.make_object (l_obj)
+			elseif attached {INTEGER_AS} a_node or attached {BIN_PLUS_AS} a_node then
+				create l_obj.make
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.integer_32_class.compiled_class.class_id)))
+				create Result.make_object (l_obj)
+			elseif attached {BOOL_AS} a_node or attached {UN_NOT_AS} a_node or attached {BIN_OR_AS} a_node or attached {BIN_AND_AS} a_node or attached {BIN_EQ_AS} a_node or attached {BIN_TILDE_AS} a_node or attached {BIN_AND_THEN_AS} a_node  or attached {BIN_OR_ELSE_AS} a_node then
+				create l_obj.make
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.boolean_class.compiled_class.class_id)))
+				create Result.make_object (l_obj)
 			elseif attached {CURRENT_AS} a_node as l_node then
 				create l_obj.make
 				l_obj.force (alias_graph.stack_top.current_object)
-				create Result.make_object (l_obj)
-			elseif attached {UN_NOT_AS} a_node or attached {BIN_OR_AS} a_node or attached {BIN_AND_AS} a_node or attached {BIN_EQ_AS} a_node or attached {BIN_TILDE_AS} a_node then
-				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.boolean_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
 			elseif attached {CREATE_CREATION_EXPR_AS} a_node as l_node then
 				if attached {CLASS_TYPE_AS} l_node.type as l_type and then attached System.eiffel_universe.classes_with_name (l_type.class_name.name_8) as l_classes and then l_classes.count = 1 then
@@ -390,6 +447,10 @@ feature {NONE} -- utilities
 						else
 								-- TODO
 						end
+					elseif l_routine.e_feature.name_32 ~ "hash_code" and across System.eiffel_universe.classes_with_name ("V_REFERENCE_HASHABLE") as ancestor some System.class_of_id (l_node.class_id).inherits_from (ancestor.item.compiled_class) end then
+						create l_obj.make
+						l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.integer_32_class.compiled_class.class_id)))
+						create Result.make_object (l_obj)
 					elseif l_routine.e_feature.name_32 ~ "print" then
 						--create Result.make_void
 						create l_obj.make
@@ -635,6 +696,7 @@ feature {NONE} -- utilities
 					across
 						l_target.alias_object as aliases
 					loop
+						stop (555)
 						Result := get_alias_info (aliases.item, l_node.message)
 					end
 				end
@@ -655,6 +717,10 @@ feature {NONE} -- utilities
 						print (l_classes.count)
 					end
 				end
+
+			elseif attached {CONVERTED_EXPR_AS} a_node as l_node then
+				stop (9)
+				Result := get_alias_info (a_target, l_node.expr)
 			end
 			if Result = Void then
 				stop (111)
@@ -674,7 +740,7 @@ feature {NONE} -- utilities
 				end
 				io.new_line
 				print (n)
-				if n = -1 then
+				if n = 555 then
 					print (n)
 				end
 				io.new_line

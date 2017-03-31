@@ -312,8 +312,7 @@ feature -- Managing Conditionals Branches
 
 feature -- Information to Recursion
 
-	inter_deletion: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-								path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]
+	inter_deletion: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]
 			--after the execution of a conditional, `inter_deletion' will store the entities of those deleted links that
 			-- need to be put back on, e.g. if C then a := b else a:= c end: entity 'a' will be in the deletion list
 			-- regardless which branch the execution does, 'a' will be pointing to something new

@@ -50,58 +50,6 @@ feature
 			if stack.count > 1 then
 				l_ent := stack.last.caller_path.twin
 				l_local_ent := stack.last.caller_locals.twin
---				if across ent as e some stack_top.locals.has (e.item) end then
---						-- TODO: only taking into account arguments, there's a need
---						-- 		to expand the implementation to take care of local vars (e.g. Result)
---						-- Note: this is a temporal solution
---					if tracing then
---						across
---							stack_top.locals.at (ent.first).first.entity as e
---						loop
---							io.new_line
---							print (e.item)
---						end
---						across
---							1 |..| stack.count as i
---						loop
---							across
---								stack.at (stack.count - i.item + 1).current_object.attributes as atts
---							loop
---								if atts.item.has (stack_top.locals.at (ent.first).first) then
---									print (atts.key)
---									io.new_line
---									-- TODO: put both coursor to the end so not to iterate any more
---								end
---							end
---						end
---						across
---							l_ent as e
---						loop
---							io.new_line
---							print (e.item)
---						end
---					end
---					across
---						1 |..| stack.count as i
---					loop
---						across
---							stack.at (stack.count - i.item + 1).current_object.attributes as atts
---						loop
---							if atts.item.has (stack_top.locals.at (ent.first).first) then
---								create name.make_from_string (atts.key)
---								-- TODO: put both coursor to the end so not to iterate any more
---							end
---						end
---					end
---				end
---				if attached name as n and then not n.is_empty then
---					l_ent.move (l_ent.count)
---					l_ent.remove
---					ent.wipe_out
---					ent.force (name)
---				else
---					print ("Empty")
---				end
 			else
 				create l_ent.make
 				create l_local_ent.make
@@ -236,7 +184,7 @@ feature
 			Result.append ("}%N")
 		end
 
-feature -- Tsting
+feature -- Updating
 
 	update_call
 			-- updates the name of the caller if the current call is a function
@@ -669,8 +617,7 @@ feature -- Managing Recursion
 	rec_last_locals: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]
 			-- points to the last locals in a previous recursive call
 
-	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-												path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]]
+	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]]
 			-- additions and deletions of the previous recursive calls.
 			-- TODO: To improve
 
@@ -688,8 +635,7 @@ feature -- Managing Recursion
 			stack_top.alias_pos_rec.finalising_recursive_call (stack.first, stack_top, pre_add, pre_del)
 		end
 
-	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-										path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]
+	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]
 			-- returns the entities to be added to deletion after a conditional
 		do
 			Result := alias_cond.inter_deletion

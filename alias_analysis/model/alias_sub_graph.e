@@ -3,7 +3,6 @@ note
 		This class managing sub-alias-graph when need it: the main the functionality to add/delete/restore the Alias graph when the
 		analysis enters in structures such as conditionals, loops, recursions or handling 'dynamic binding'
 		This class provides mechanisms to manipulate the graph and to restore it. Also mechanismos to subsume nodes.
-
 	]"
 	legal: "See notice at end of class."
 	status: "See notice at end of class."
@@ -29,7 +28,7 @@ feature {NONE} -- Initialiasation
 
 feature -- Updating
 
-	stop2 (n:INTEGER)
+	stop2 (n: INTEGER)
 		do
 			if tracing then
 				print (n)
@@ -37,10 +36,7 @@ feature -- Updating
 			end
 		end
 
-	updating_A_D (target_name, source_name: STRING; target_object, source_object: TWO_WAY_LIST [ALIAS_OBJECT];
-						target_path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-						target_path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]];
-						routine_name: STRING)
+	updating_A_D (target_name, source_name: STRING; target_object, source_object: TWO_WAY_LIST [ALIAS_OBJECT]; target_path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; target_path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]; routine_name: STRING)
 			-- updates the sets `additions' and `deletions' accordingly:
 			--	additions -> [`target_name': (`source_name', `source_object', `target_path', `path_locals')]
 			--  deletions -> [`target_name': (`source_name', `source_object', `target_path', `path_locals')]
@@ -48,8 +44,7 @@ feature -- Updating
 		require
 			is_in_structure
 		local
-			tup: TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-									locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]]
+			tup: TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]]
 			obj: TWO_WAY_LIST [ALIAS_OBJECT]
 		do
 			stop2 (0)
@@ -107,7 +102,6 @@ feature -- Updating
 			else
 				tup.name := "Void"
 			end
-
 			tup.path := target_path.deep_twin
 			create obj.make
 			stop2 (12)
@@ -181,39 +175,138 @@ feature -- Updating
 	deleting_local_vars (function_name: STRING; locals: ARRAY [STRING])
 			-- updates the sets `additions and `deletions' deleting local variables that will no be of
 			-- any used outside a feature
+		local
+			stop: BOOLEAN
+			key: STRING
 		do
 			if tracing then
 				printing_vars (1)
 			end
-				-- local var Result
-			if additions.count > 0 then
-				additions.last.remove (function_name + "_Result")
-			end
-
-			if deletions.count > 0 then
-				deletions.last.remove (function_name + "_Result")
-			end
-
-
-				-- other local variables
-			across
-				locals as l
-			loop
-				if tracing then
-					print (l.item)
-					io.new_line
+			if locals.count >= 1 then
+					-- local var Result
+				if additions.count > 0 then
+					additions.last.remove (function_name + "_Result")
+				end
+				if deletions.count > 0 then
+					deletions.last.remove (function_name + "_Result")
 				end
 
-				if not (l.item ~ "Result") then
-					if additions.count > 0 then
-						additions.last.remove (l.item)
+					-- other local variables
+				across
+					locals as l
+				loop
+					if tracing then
+						print (l.item)
+						io.new_line
 					end
-
-					if deletions.count > 0 then
-						deletions.last.remove (l.item)
+					if not (l.item ~ "Result") then
+						if additions.count > 0 then
+							additions.last.remove (l.item)
+						end
+						if deletions.count > 0 then
+							deletions.last.remove (l.item)
+						end
 					end
+				end
+					-- Experimenting
+					-- TODO: performance can be achieved but treating additions and deletions
+					--		as having the same values (abstractly)
+					--
+				if additions.count >= 1 then
+					across
+						locals as l
+					loop
+						if tracing then
+							print ("checking: ")
+							print (l.item)
+							io.new_line
+							io.new_line
+						end
 
-
+						across
+							additions.last as vals
+						loop
+							key := vals.key
+							across
+								vals.item.path as path
+							loop
+								if tracing then
+									print ("(additions) in here: [")
+									across
+										path.item as p
+									loop
+										print (p.item)
+										print (", ")
+									end
+									print ("]")
+									io.new_line
+								end
+								if not stop and across path.item as p some p.item ~ l.item end then
+									stop := True
+								end
+							end
+							if stop then
+								stop := False
+								if tracing then
+									print (key)
+									io.new_line
+									print ("(add)-> [")
+									across
+										additions.last as dd
+									loop
+										print (dd.key)
+										print (", ")
+									end
+									print ("]%N")
+									io.new_line
+									print ("(del)-> [")
+									across
+										deletions.last as dd
+									loop
+										print (dd.key)
+										print (", ")
+									end
+									print ("]%N")
+									io.new_line
+									print ("printing vars")
+									printing_vars (1)
+									print ("=======================================")
+								end
+								if tracing then
+									io.new_line
+									print ("key: ")
+									print (key)
+									io.new_line
+									print ("[")
+									across
+										additions.last as dd
+									loop
+										print (dd.key)
+										print (", ")
+									end
+									print ("]%N")
+									io.new_line
+								end
+								additions.last.remove (key)
+								if tracing then
+									io.new_line
+									print ("key: ")
+									print (key)
+									io.new_line
+									print ("[")
+									across
+										deletions.last as dd
+									loop
+										print (dd.key)
+										print (", ")
+									end
+									print ("]%N")
+									io.new_line
+								end
+								deletions.last.remove (key)
+							end
+						end
+					end
 				end
 			end
 		end
@@ -240,10 +333,8 @@ feature -- Managing Branches
 		require
 			is_in_structure
 		do
-			additions.force (create {HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-									path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]}.make (0))
-			deletions.force (create {HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-									path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]}.make (0))
+			additions.force (create {HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]}.make (0))
+			deletions.force (create {HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]}.make (0))
 		end
 
 	finalising (root, current_routine: ALIAS_ROUTINE)
@@ -274,10 +365,8 @@ feature -- Managing merging nodes (for loops and recursion)
 					print (added.key)
 					io.new_line
 				end
-				if added.item.obj.count = additions.at (additions.count - 1).at (added.key).obj.count
-					and not across added.item.obj as obj all additions.at (additions.count - 1).at (added.key).obj.has (obj.item) end
-				then
-					--TODO mark1 go through all elements in additions.at (add.index) .. addition.last adding thing to cond
+				if added.item.obj.count = additions.at (additions.count - 1).at (added.key).obj.count and not across added.item.obj as obj all additions.at (additions.count - 1).at (added.key).obj.has (obj.item) end then
+						--TODO mark1 go through all elements in additions.at (add.index) .. addition.last adding thing to cond
 					across
 						added.item.obj as n2
 					loop
@@ -343,7 +432,7 @@ feature -- Managing merging nodes (for loops and recursion)
 
 	subsume_to_n2 (v: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING]; n1, n2: ALIAS_OBJECT)
 			-- subsumes node `n2' by `n1' in the graph
-			-- it comprises 1 step (steps (ii))
+			-- it comprises 1 step (step (ii))
 			-- (NO) i. for_all i | i \in Nodes and i /= 2 and n_2 -->_t n_i then n_1 -->_t n_i
 			-- ii. for_all i | i \in Nodes and i /= 2 and n_i -->_t n_2 then n_i -->_t n_1
 			-- (NO) iii. for_all n_2 -->_t n_2 then n_1 -->_t n_1
@@ -366,16 +455,13 @@ feature -- Managing merging nodes (for loops and recursion)
 							end
 							values.item.remove
 						end
-
 						if not values.item.after and not values.item.item.visited then
 							values.item.item.visited := True
 							subsume_to_n2 (values.item.item.attributes, n1, n2)
 						end
-
 						if not values.item.after then
 							values.item.forth
 						end
-
 					end
 				end
 			end
@@ -429,7 +515,6 @@ feature -- Managing merging nodes (for loops and recursion)
 						io.new_line
 					end
 				end
-
 				if tracing then
 					print_atts_depth (current_object.attributes)
 					io.new_line
@@ -453,9 +538,9 @@ feature -- Managing merging nodes (for loops and recursion)
 				elseif current_object.attributes.has (name_entity) then
 					c_objs := current_object.attributes.at (name_entity)
 				else
---				elseif current_routine.current_object.attributes.has (name_entity) then
---					c_objs := current_routine.current_object.attributes.at (name_entity)
---				else
+						--				elseif current_routine.current_object.attributes.has (name_entity) then
+						--					c_objs := current_routine.current_object.attributes.at (name_entity)
+						--				else
 
 				end
 				across
@@ -486,14 +571,13 @@ feature -- Managing merging nodes (for loops and recursion)
 feature -- Access
 	--TODO: to create a class with this structure
 
-	additions: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-											path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]], STRING]];
+	additions: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]];
 
-			-- stores the edges added by a step (A_i in the def): the key is the name of the entity to be added (it contains all path)
-			-- `name': name of the entity to point at
-			-- `obj': object that `name' is pointing at
-			-- `path': path of the entity e.g. Current.v.[w,x]...
-			-- `path_locals': contains the local variables of the callers (in case of need)
+		-- stores the edges added by a step (A_i in the def): the key is the name of the entity to be added (it contains all path)
+		-- `name': name of the entity to point at
+		-- `obj': object that `name' is pointing at
+		-- `path': path of the entity e.g. Current.v.[w,x]...
+		-- `path_locals': contains the local variables of the callers (in case of need)
 
 	deletions: like additions
 			-- stores the edges deleted by a step (D_i in the def): the key is the name of the entity to be deleted (it contains all path)
@@ -603,7 +687,6 @@ feature --{NONE} -- To Delete
 								else
 									print ("Void")
 								end
-
 								if obj_add.after then
 									print (", ")
 								end
@@ -626,7 +709,6 @@ feature --{NONE} -- To Delete
 									print (", ")
 								end
 							end
-
 							print ("] abs_name: ")
 							print (pair_add.item.abs_name)
 							print ("%N")

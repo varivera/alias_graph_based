@@ -173,7 +173,10 @@ feature {NONE}
 			e: EXECUTION_ENVIRONMENT
 		do
 			print (alias_analysis_runner.as_graph)
+			io.new_line
+			print (alias_analysis_runner.change_as_graph)
 			io.new_line;
+
 
 --			create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
 --			output_file.put_string  (alias_analysis_runner.as_graph)
@@ -198,6 +201,9 @@ feature {NONE}
 
 			(create {EXECUTION_ENVIRONMENT}).launch (
 					"echo %"" + alias_analysis_runner.as_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
+				);
+			(create {EXECUTION_ENVIRONMENT}).launch (
+					"echo %"" + alias_analysis_runner.change_as_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
 				)
 		end
 

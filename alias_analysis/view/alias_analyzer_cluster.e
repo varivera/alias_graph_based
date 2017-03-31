@@ -68,7 +68,8 @@ feature {NONE}
 			loop
 				if not cla.item.actual_class.name.starts_with ("MML_") and
 					not (cla.item.actual_class.name ~ "V_STRING_INPUT") and
-					not (cla.item.actual_class.name ~ "V_DEFAULT") then
+					not (cla.item.actual_class.name ~ "V_DEFAULT")
+				then
 					if System.eiffel_universe.classes_with_name (cla.item.actual_class.name).count = 1 then
 						print ("Class being analysed: ")
 						print (cla.item.actual_class.name)
@@ -84,12 +85,20 @@ feature {NONE}
 							i > class_.feature_table.count or
 							class_.is_deferred
 						loop
-							--V_DOUBLY_LINKED_LIST_ITERATOR > index
 							if not class_.feature_table.features.at (i).is_attribute
 								and class_.feature_table.features.at (i).e_feature.associated_class.class_id = class_.class_id
 								and attached {E_ROUTINE} class_.feature_table.features.at (i).e_feature as r
 								and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as p
+							-- TODO
 								and not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out")
+								and (class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code"))
+								and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_insert_left"))
+								and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
+								and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_index"))
+								and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "index"))
+								and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
+								and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "start"))
+								and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "finish"))
 							then
 								print ("====Feature: ")
 								print (class_.feature_table.features.at (i).e_feature.name_32)

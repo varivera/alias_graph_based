@@ -57,7 +57,7 @@ feature
 	index: INTEGER_32
 			-- analysis will execute this breakpoint index next
 
-	as_string, as_graph: STRING_8
+	as_string, as_graph, change_as_graph: STRING_8
 
 	step_over
 		require
@@ -89,13 +89,20 @@ feature
 			index := a_index
 			as_string := "[No report taken?!]"
 			as_graph := ""
+			change_as_graph := ""
 			if index = routine.number_of_breakpoint_slots then
-				create l_visitor.make (routine, Void)
+					-- this can be changed by using a button
+				create {CHANGE_ANALYSIS_VISITOR} l_visitor.make (routine, Void)
 				routine.body.process (l_visitor)
 				as_string := l_visitor.alias_graph.to_string
 				as_graph := l_visitor.alias_graph.to_graph
+				if attached {CHANGE_ANALYSIS_VISITOR} l_visitor as vis then
+					change_as_graph := vis.change_graph.to_graph
+				end
+
 			else
-				create l_visitor.make (routine, agent  (ag_node: AST_EIFFEL; ag_alias_graph: ALIAS_GRAPH)
+					-- this can be changed by using a button
+				create {CHANGE_ANALYSIS_VISITOR} l_visitor.make (routine, agent  (ag_node: AST_EIFFEL; ag_alias_graph: ALIAS_GRAPH; ag_change_graph: CHANGE_GRAPH)
 					do
 						if ag_node.breakpoint_slot = 0 then
 							(create {ETR_BP_SLOT_INITIALIZER}).init_with_context (routine.e_feature.ast, routine.written_class)
@@ -104,6 +111,9 @@ feature
 								--Io.put_string ("Taking report before " + ag_node.generator + " (slot " + index.out + ").%N")
 							as_string := ag_alias_graph.to_string
 							as_graph := ag_alias_graph.to_graph
+							if attached ag_change_graph as g then
+								change_as_graph := g.to_graph
+							end
 						end
 					end)
 				routine.body.process (l_visitor)
