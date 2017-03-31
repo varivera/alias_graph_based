@@ -97,7 +97,9 @@ feature {NONE}
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 			end
-			if attached get_alias_info (Void, a_node.target) as l_target and then l_target.is_variable and then attached get_alias_info (Void, a_node.source) as l_source then
+			if attached get_alias_info (Void, a_node.target) as l_target and then l_target.is_variable and then
+						attached get_alias_info (Void, a_node.source) as l_source
+			then
 				if alias_graph.is_conditional_branch or alias_graph.is_loop_iter or alias_graph.is_dyn_bin then
 						-- check if the target is an expanded type (do nothing if so)
 					stop (334)
@@ -111,7 +113,7 @@ feature {NONE}
 					alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 					alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 				end
-				l_target.alias_object := l_source.alias_object
+				assigning (l_target, l_source)
 				if tracing then
 					alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 					alias_graph.print_atts_depth (alias_graph.stack_top.locals)
@@ -124,6 +126,18 @@ feature {NONE}
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 			end
 		end
+
+	assigning (target, source: ALIAS_OBJECT_INFO)
+			-- assigns objects of `source' to `target' objects
+		do
+			target.alias_object := source.alias_object
+			across
+				target.alias_object as objs
+			loop
+				objs.item.set_changed
+			end
+		end
+
 
 	process_assigner_call_as (a_node: ASSIGNER_CALL_AS)
 		local
@@ -1046,6 +1060,11 @@ feature {NONE} -- utilities
 							s as objs
 						loop
 							if not graph.at (path [index]).has (objs.item) then
+								across
+									graph.at (path [index]) as oo
+								loop
+									oo.item.set_changed
+								end
 								graph.at (path [index]).force (objs.item)
 							end
 						end
@@ -1053,6 +1072,11 @@ feature {NONE} -- utilities
 						type := graph.at (path [index]).first.type
 						graph.at (path [index]).wipe_out
 						graph.at (path [index]).force (create {ALIAS_OBJECT}.make (type))
+						across
+							graph.at (path [index]) as oo
+						loop
+							oo.item.set_changed
+						end
 					end
 				end
 			end

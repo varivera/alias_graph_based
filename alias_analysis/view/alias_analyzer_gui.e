@@ -173,8 +173,6 @@ feature {NONE}
 			e: EXECUTION_ENVIRONMENT
 		do
 			print (alias_analysis_runner.as_graph)
-			io.new_line
-			print (alias_analysis_runner.change_as_graph)
 			io.new_line;
 
 
@@ -202,9 +200,7 @@ feature {NONE}
 			(create {EXECUTION_ENVIRONMENT}).launch (
 					"echo %"" + alias_analysis_runner.as_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
 				);
-			(create {EXECUTION_ENVIRONMENT}).launch (
-					"echo %"" + alias_analysis_runner.change_as_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
-				)
+			
 		end
 
 invariant

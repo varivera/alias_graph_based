@@ -79,6 +79,10 @@ feature {ANY}
 	entity_local: TWO_WAY_LIST [like attributes] assign set_entity_local
 			-- stores the local attributes of the entity that called the current object
 
+	changed: BOOLEAN
+		-- used for Change Analysis. It answer the question
+		-- does the currrent object belong to the frame
+
 feature {ANY}
 
 	set_entity (name: TWO_WAY_LIST [STRING])
@@ -90,6 +94,12 @@ feature {ANY}
 			-- sets the entity_local variable
 		do
 			entity_local := ent_local
+		end
+
+	set_changed
+			-- mark the current object as changed
+		do
+			changed := True
 		end
 
 	out: STRING_8

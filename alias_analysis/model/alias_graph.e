@@ -176,6 +176,8 @@ feature
 	to_graph: STRING_8
 			-- Returns the graph representation of the Alias Graph (constructs a digraph to be drawn by other tools)
 		do
+			change_graph (stack.last, create {TWO_WAY_LIST [ALIAS_OBJECT]}.make)
+			reset_visiting (stack.last)
 			create Result.make_empty
 			Result.append ("digraph g {%N")
 			Result.append ("%Tnode [shape=box]%N")
@@ -420,8 +422,56 @@ feature {NONE} -- Computing
 					across
 						c.item as vars
 					loop
-						a_output.append ("%T" + a_cur_node.visiting_data.last + "->" + vars.item.visiting_data.last + "[label=<" + c.key + ">]%N")
+
+						a_output.append ("%T" + a_cur_node.visiting_data.last + "->" + vars.item.visiting_data.last + "["+
+						if vars.item.changed then
+							"color=red "
+						else
+							""
+						end
+						+"label=<" + c.key + ">]%N")
 						print_edges (vars.item, a_output)
+					end
+				end
+			end
+		end
+
+	change_graph (a_cur_node: ALIAS_VISITABLE; path: TWO_WAY_LIST [ALIAS_OBJECT])
+			-- complete the graph with 'changed' information: updates the graph so ALIAS_OBJECT
+			-- 		marked nodes are reachable from 'root'
+		require
+			a_cur_node /= Void
+			path /= Void
+		local
+			tmp: TWO_WAY_LIST [ALIAS_OBJECT]
+		do
+			if not a_cur_node.visited then
+				a_cur_node.visited := True
+				if attached {ALIAS_ROUTINE} a_cur_node as l_ar then
+					change_graph (l_ar.current_object, path)
+				end
+				across
+					a_cur_node.variables as c
+				loop
+					across
+						c.item as vars
+					loop
+						create tmp.make
+						across
+							path as p
+						loop
+							tmp.force (p.item)
+						end
+						if vars.item.changed then
+							across
+								tmp as p
+							loop
+								p.item.set_changed
+							end
+						else
+							tmp.force (vars.item)
+						end
+						change_graph (vars.item, tmp)
 					end
 				end
 			end
