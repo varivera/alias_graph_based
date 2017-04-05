@@ -172,12 +172,16 @@ feature -- Updating
 			end
 		end
 
-	deleting_local_vars (function_name: STRING; locals: ARRAY [ALIAS_KEY])
+	deleting_local_vars (function_name: STRING; func_n: INTEGER; locals: ARRAY [ALIAS_KEY])
 			-- updates the sets `additions and `deletions' deleting local variables that will no be of
 			-- any used outside a feature
+			-- `func_n' is used to determined whether a variable is a local variable of the corresponding feature
+		require
+			is_in_structure
 		local
 			stop: BOOLEAN
 			key: STRING
+			keys_to_delete: ARRAYED_LIST [ALIAS_KEY]
 		do
 			if tracing then
 				printing_vars (1)
@@ -208,10 +212,55 @@ feature -- Updating
 						end
 					end
 				end
-					-- Experimenting
 					-- TODO: performance can be achieved but treating additions and deletions
 					--		as having the same values (abstractly)
-					--
+
+
+				if additions.count >= 1 then
+					across
+						locals as l
+					loop
+						if tracing then
+							print ("checking: ")
+							print (l.item)
+							io.new_line
+							io.new_line
+						end
+						create keys_to_delete.make (0)
+						across
+							additions.last as vals
+						loop
+							key := vals.key.name
+							if tracing then
+								io.new_line
+								print (">")
+								print (l.item)
+								print ("<")
+								print (" =? ")
+								print (">")
+								print (vals.item.name)
+								print ("<")
+								io.new_line
+								print (vals.item.name.out ~ l.item.out)
+								io.new_line
+								print (func_n - 1)
+								io.new_line
+								print (vals.item.path.count)
+								print (l.item ~ vals.item.name and vals.item.path.count = (func_n - 1))
+							end
+							if l.item.out ~ vals.item.name.out and vals.item.path.count = (func_n - 1) then
+								keys_to_delete.force (create {ALIAS_KEY}.make (key))
+							end
+						end
+						across
+							keys_to_delete as keys
+						loop
+							additions.last.remove (keys.item)
+							deletions.last.remove (keys.item)
+						end
+					end
+				end
+
 				if additions.count >= 1 then
 					across
 						locals as l
@@ -554,6 +603,14 @@ feature -- Managing merging nodes (for loops and recursion)
 				across
 					path.at (index) as paths
 				loop
+					if tracing then
+						print_atts_depth (current_object.attributes)
+						io.new_line
+						print_atts_depth (current_routine.locals)
+						io.new_line
+						print (name_entity)
+						io.new_line
+					end
 					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
 						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))
 					elseif current_routine.locals.has_key (create {ALIAS_KEY}.make (paths.item)) then

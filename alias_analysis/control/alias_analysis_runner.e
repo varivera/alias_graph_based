@@ -44,7 +44,8 @@ feature {NONE}
 			end
 			index := 1
 			if not is_done then
-				step_until (1)
+				-- TODO: comment it out step_until (1)
+				step_end
 			end
 		ensure
 			index = 1
@@ -73,6 +74,21 @@ feature
 			not is_done
 		do
 			step_until (routine.number_of_breakpoint_slots)
+		end
+
+	step_end
+		local
+			l_visitor: ALIAS_ANALYSIS_VISITOR
+		do
+			as_string := "[No report taken?!]"
+			as_graph := ""
+			create l_visitor.make (routine, Void)
+			routine.body.process (l_visitor)
+			as_string := l_visitor.alias_graph.to_string
+			as_graph := l_visitor.alias_graph.to_graph
+			if breakpoints /= Void then
+				gui_refresh_agent.call
+			end
 		end
 
 	step_until (a_index: INTEGER_32)

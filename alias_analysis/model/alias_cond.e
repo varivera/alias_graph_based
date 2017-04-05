@@ -132,6 +132,13 @@ feature -- Managing Conditionals Branches
 						end
 					end
 					if c_objs.has (n_o.item) then
+						if tracing then
+							io.new_line
+							print (n_o.item)
+							io.new_line
+							print (c_objs.has (n_o.item))
+
+						end
 						c_objs.search (n_o.item)
 						c_objs.remove
 					end

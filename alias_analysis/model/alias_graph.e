@@ -225,9 +225,7 @@ feature -- Updating
 					end
 					stack.at (stack.count - 1).map_funct.force (atts_mapped, create {ALIAS_KEY}.make (stack_top.routine.e_feature.name_32))
 				end
-				if is_conditional_branch or is_loop_iter then
-					deleting_local_vars (stack_top.routine.e_feature.name_32, stack_top.locals.current_keys)
-				end
+				deleting_local_vars (stack_top.routine.e_feature.name_32, stack_top.locals.current_keys)
 			end
 			if tracing then
 				io.new_line
@@ -587,12 +585,17 @@ feature -- Managing Conditionals
 
 	deleting_local_vars (function_name: STRING; locals: ARRAY [ALIAS_KEY])
 			-- updates the sets `additions and `deletions' deleting local variables that will no be of any used outside a feature
-		require
-			is_conditional_branch or is_loop_iter or is_dyn_bin
 		do
-			alias_cond.deleting_local_vars (function_name, locals)
-			alias_loop.deleting_local_vars (function_name, locals)
-			alias_dyn.deleting_local_vars (function_name, locals)
+			if is_conditional_branch then
+				alias_cond.deleting_local_vars (function_name, stack.count, locals)
+			end
+
+			if is_loop_iter then
+				alias_loop.deleting_local_vars (function_name, stack.count, locals)
+			end
+			if is_dyn_bin then
+				alias_dyn.deleting_local_vars (function_name, stack.count, locals)
+			end
 		end
 
 feature -- Managing Loops
