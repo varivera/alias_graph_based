@@ -46,7 +46,7 @@ feature -- Managing Conditionals Branches
 					if tracing then
 						printing_vars (1)
 					end
-					restore_added (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+					restore_added (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 						--restore_added (objs, values.key, values.item.path, 1, values.item.obj)
 				end
 				additions.forth
@@ -65,7 +65,7 @@ feature -- Managing Conditionals Branches
 				across
 					deletions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+					restore_deleted (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 				end
 				deletions.forth
 			end
@@ -110,12 +110,12 @@ feature -- Managing Conditionals Branches
 					print (name_entity)
 					io.new_line
 				end
-				if current_object.attributes.has (name_entity) then
-					c_objs := current_object.attributes.at (name_entity)
+				if current_object.attributes.has (create {ALIAS_KEY}.make (name_entity)) then
+					c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (name_entity))
 				elseif name_entity.ends_with ("_Result") then
-					c_objs := current_routine.locals.at ("Result")
-				elseif current_routine.locals.has (name_entity) then
-					c_objs := current_routine.locals.at (name_entity)
+					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make ("Result"))
+				elseif current_routine.locals.has (create {ALIAS_KEY}.make (name_entity)) then
+					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (name_entity))
 				end
 				across
 					new_object as n_o
@@ -158,10 +158,10 @@ feature -- Managing Conditionals Branches
 				across
 					path.at (index) as paths
 				loop
-					if current_object.attributes.has (paths.item) then
-						c_objs := current_object.attributes.at (paths.item)
-					elseif current_routine.locals.has_key (paths.item) then
-						c_objs := current_routine.locals [paths.item]
+					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
+						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))
+					elseif current_routine.locals.has_key (create {ALIAS_KEY}.make (paths.item)) then
+						c_objs := current_routine.locals [create {ALIAS_KEY}.make (paths.item)]
 					end
 					across
 						c_objs as objs
@@ -194,7 +194,7 @@ feature -- Managing Conditionals Branches
 			across
 				deletions.at (n_conditional.last.index_del) as values
 			loop
-				restore_added (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+				restore_added (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 			end
 				-- delete the info in deletions and in n_conditional
 			from
@@ -217,7 +217,7 @@ feature -- Managing Conditionals Branches
 				across
 					additions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+					restore_deleted (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 				end
 				additions.forth
 			end
@@ -241,7 +241,7 @@ feature -- Managing Conditionals Branches
 			-- it will leave the intersection in n_condition.last.index_del
 		local
 			i: INTEGER
-			keys: ARRAY [STRING]
+			keys: ARRAY [ALIAS_KEY]
 			stop: BOOLEAN
 		do
 			keys := deletions.at (n_conditional.last.index_del).current_keys
@@ -312,7 +312,7 @@ feature -- Managing Conditionals Branches
 
 feature -- Information to Recursion
 
-	inter_deletion: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]
+	inter_deletion: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
 			--after the execution of a conditional, `inter_deletion' will store the entities of those deleted links that
 			-- need to be put back on, e.g. if C then a := b else a:= c end: entity 'a' will be in the deletion list
 			-- regardless which branch the execution does, 'a' will be pointing to something new

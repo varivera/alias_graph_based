@@ -46,7 +46,7 @@ feature -- Managing Feature Versions
 					if tracing then
 						printing_vars (1)
 					end
-					restore_added (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+					restore_added (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 						--restore_added (objs, values.key, values.item.path, 1, values.item.obj)
 					if tracing then
 						print_atts_depth (root.current_object.attributes)
@@ -68,7 +68,7 @@ feature -- Managing Feature Versions
 				across
 					deletions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+					restore_deleted (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 				end
 				deletions.forth
 			end
@@ -113,12 +113,12 @@ feature -- Managing Feature Versions
 					print (name_entity)
 					io.new_line
 				end
-				if current_object.attributes.has (name_entity) then
-					c_objs := current_object.attributes.at (name_entity)
+				if current_object.attributes.has (create {ALIAS_KEY}.make (name_entity)) then
+					c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (name_entity))
 				elseif name_entity.ends_with ("_Result") then
-					c_objs := current_routine.locals.at ("Result")
-				elseif current_routine.locals.has (name_entity) then
-					c_objs := current_routine.locals.at (name_entity)
+					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make ("Result"))
+				elseif current_routine.locals.has (create {ALIAS_KEY}.make (name_entity)) then
+					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (name_entity))
 				end
 				across
 					new_object as n_o
@@ -143,7 +143,7 @@ feature -- Managing Feature Versions
 								io.new_line
 								print ("Void")
 							end
-							if current_object.attributes.at (name_entity) = Void then
+							if current_object.attributes.at (create {ALIAS_KEY}.make (name_entity)) = Void then
 								io.new_line
 								print ("Void")
 							end
@@ -172,10 +172,10 @@ feature -- Managing Feature Versions
 				across
 					path.at (index) as paths
 				loop
-					if current_object.attributes.has (paths.item) then
-						c_objs := current_object.attributes.at (paths.item)
-					elseif current_routine.locals.has_key (paths.item) then
-						c_objs := current_routine.locals [paths.item]
+					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
+						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))
+					elseif current_routine.locals.has_key (create {ALIAS_KEY}.make (paths.item)) then
+						c_objs := current_routine.locals [create {ALIAS_KEY}.make (paths.item)]
 					end
 					across
 						c_objs as objs
@@ -208,7 +208,7 @@ feature -- Managing Feature Versions
 			across
 				deletions.at (n_dyb_bind.last.index_del) as values
 			loop
-				restore_added (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+				restore_added (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 			end
 				-- delete the info in deletions and in n_dyb_bind
 			from
@@ -231,7 +231,7 @@ feature -- Managing Feature Versions
 				across
 					additions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+					restore_deleted (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 				end
 				additions.forth
 			end
@@ -255,7 +255,7 @@ feature -- Managing Feature Versions
 			-- it will leave the intersection in n_condition.last.index_del
 		local
 			i: INTEGER
-			keys: ARRAY [STRING]
+			keys: ARRAY [ALIAS_KEY]
 			stop: BOOLEAN
 		do
 			keys := deletions.at (n_dyb_bind.last.index_del).current_keys

@@ -72,7 +72,7 @@ feature {ANY}
 			-- alias_pos_rec stands for alias possible recursion
 
 feature -- Test (March 06) TODO
-	map_funct: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
+	map_funct: HASH_TABLE [TWO_WAY_LIST [STRING], ALIAS_KEY]
 			-- maps a function called to actual return values in attributes
 
 

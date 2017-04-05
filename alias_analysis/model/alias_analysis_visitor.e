@@ -130,12 +130,14 @@ feature {NONE}
 	assigning (target, source: ALIAS_OBJECT_INFO)
 			-- assigns objects of `source' to `target' objects
 		do
-			target.alias_object := source.alias_object
 			across
-				target.alias_object as objs
+				alias_graph.stack_top.current_object.attributes.current_keys as k
 			loop
-				objs.item.set_changed
+				if k.item.name ~ target.variable_name then
+					k.item.set_assigned
+				end
 			end
+			target.alias_object := source.alias_object
 		end
 
 
@@ -438,10 +440,10 @@ feature {NONE} -- utilities
 			elseif attached {ACCESS_FEAT_AS} a_node as l_node then
 				if l_node.is_local or l_node.is_argument or l_node.is_object_test_local then
 						-- check is l_node.is_local is already created in the graph
-					if not alias_graph.stack_top.locals.has (l_node.access_name_32) then
+					if not alias_graph.stack_top.locals.has (create {ALIAS_KEY}.make (l_node.access_name_32)) then
 						create l_obj.make
 						l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_node.class_id)))
-						alias_graph.stack_top.locals.force (l_obj, l_node.access_name_32)
+						alias_graph.stack_top.locals.force (l_obj, create {ALIAS_KEY}.make (l_node.access_name_32))
 					end
 					create Result.make_variable (
 						alias_graph.stack_top.routine,
@@ -518,20 +520,20 @@ feature {NONE} -- utilities
 
 
 										end
+										stop (98)
+										if tracing then
+											io.new_line
+											print ("class: ")
+											print (descendant.item.name)
+											io.new_line
+											print ("routine: ")
 
---										across
---											descendant.item.changed_features as t
---										loop
---											if tracing then
---												io.new_line
---												print (t.key)
---												print (" as ")
---												print (t.item)
---											end
+											print (descendant.item.feature_of_rout_id (l_routine.rout_id_set.first).e_feature.name_32)
+--											print (descendant.item.feature_of_rout_id (l_routine.id).e_feature.name_32)
+										end
 
---										end
-										if attached {PROCEDURE_I} descendant.item.feature_named_32 (l_routine.e_feature.name_32) as l_r then
---										if attached {PROCEDURE_I} descendant.item.feature_with_feature_id (l_routine.e_feature.feature_id) as l_r then
+--										if attached {PROCEDURE_I} descendant.item.feature_named_32 (l_routine.e_feature.name_32) as l_r then
+										if attached {PROCEDURE_I} descendant.item.feature_of_rout_id (l_routine.rout_id_set.first) as l_r then
 											if tracing then
 												io.new_line
 												print (l_r.e_feature.name_32)
@@ -598,8 +600,8 @@ feature {NONE} -- utilities
 							if l_target.function then
 								stop (125)
 									-- The name of the entity should be changed. It is being carried out by the stack_top routine
-								if alias_graph.stack_top.map_funct.has_key (l_target.context_routine.e_feature.name_32) then
-									aliasses.item.entity := alias_graph.stack_top.map_funct [l_target.context_routine.e_feature.name_32]
+								if alias_graph.stack_top.map_funct.has_key (create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)) then
+									aliasses.item.entity := alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)]
 								else
 									entities_caller.force ("ERROR")
 									aliasses.item.entity := entities_caller
@@ -615,7 +617,7 @@ feature {NONE} -- utilities
 								-- TODO: to ask for argument
 								if tracing then
 									stop (-1)
-									print (alias_graph.stack_top.locals.has (l_target.variable_name))
+									print (alias_graph.stack_top.locals.has (create {ALIAS_KEY}.make (l_target.variable_name)))
 								end
 
 								aliasses.item.entity := entities_caller
@@ -662,8 +664,8 @@ feature {NONE} -- utilities
 						if l_target.function then
 							stop (129)
 								-- The name of the entity should be changed. It is being carried out by the stack_top routine
-							if alias_graph.stack_top.map_funct.has_key (l_target.context_routine.e_feature.name_32) then
-								aliasses.item.entity := alias_graph.stack_top.map_funct [l_target.context_routine.e_feature.name_32]
+							if alias_graph.stack_top.map_funct.has_key (create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)) then
+								aliasses.item.entity := alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)]
 							else
 								entities_caller.force ("ERROR")
 								aliasses.item.entity := entities_caller
@@ -754,7 +756,7 @@ feature {NONE} -- utilities
 				end
 				io.new_line
 				print (n)
-				if n = 555 then
+				if n = 98 then
 					print (n)
 				end
 				io.new_line
@@ -796,10 +798,10 @@ feature {NONE} -- utilities
 			a_routine /= Void
 		local
 			l_params: TWO_WAY_LIST [ALIAS_OBJECT_INFO]
-			may_alising_external: TWO_WAY_LIST [STRING]
+			may_aliasing_external: TWO_WAY_LIST [STRING]
 			alias_a, alias_b: STRING
 			objs: ALIAS_OBJECT
-			ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]
+			ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 		do
 				-- before making the call: check if recursion, if so, check for Fix Point
 			alias_graph.check_recursive_fix_point (a_routine.feature_name_32)
@@ -872,10 +874,10 @@ feature {NONE} -- utilities
 							alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 						end
 
-						alias_graph.update_class_atts (alias_graph.stack_top.locals.at ("other").first.type.base_class, alias_graph.stack_top.locals.at ("other").first.attributes)
+						alias_graph.update_class_atts (alias_graph.stack_top.locals.at (create {ALIAS_KEY}.make ("other")).first.type.base_class, alias_graph.stack_top.locals.at (create {ALIAS_KEY}.make ("other")).first.attributes)
 
 						across
-							alias_graph.stack_top.locals.at ("other").first.attributes as atts
+							alias_graph.stack_top.locals.at (create {ALIAS_KEY}.make ("other")).first.attributes as atts
 									-- note: from ANY class the name will always be 'other'
 						loop
 								-- wipe out all elements (if any)
@@ -903,7 +905,7 @@ feature {NONE} -- utilities
 
 						alias_graph.update_class_atts (a_target.type.base_class, a_target.attributes)
 
-						alias_graph.stack_top.locals.force (create {TWO_WAY_LIST [ALIAS_OBJECT]}.make, "Result")
+						alias_graph.stack_top.locals.force (create {TWO_WAY_LIST [ALIAS_OBJECT]}.make, create {ALIAS_KEY}.make ("Result"))
 						create objs.make (a_target.type)
 						across
 							a_target.attributes as vars
@@ -916,7 +918,7 @@ feature {NONE} -- utilities
 							end
 						end
 
-						alias_graph.stack_top.locals.at ("Result").force (objs)
+						alias_graph.stack_top.locals.at (create {ALIAS_KEY}.make ("Result")).force (objs)
 					end
 				elseif a_routine.access_class.name ~ "SPECIAL" or a_routine.is_external then
 						-- external features do not have implementation information.
@@ -924,17 +926,17 @@ feature {NONE} -- utilities
 						-- a note clause in Eiffel with tag 'external_alias'.
 
 						-- The information of the signature is still available and needed
-					may_alising_external := get_alias_pairs (a_routine)
-					if (may_alising_external.count \\ 2) = 0 then
+					may_aliasing_external := get_alias_pairs (a_routine)
+					if (may_aliasing_external.count \\ 2) = 0 then
 						from
-							may_alising_external.start
+							may_aliasing_external.start
 						until
-							may_alising_external.after
+							may_aliasing_external.after
 						loop
-							alias_a := may_alising_external.item
-							may_alising_external.forth
-							alias_b := may_alising_external.item
-							may_alising_external.forth
+							alias_a := may_aliasing_external.item
+							may_aliasing_external.forth
+							alias_b := may_aliasing_external.item
+							may_aliasing_external.forth
 							if tracing then
 								print_aliases (alias_a, alias_b)
 							end
@@ -981,7 +983,7 @@ feature {NONE} -- utilities
 			path := alias_b.split ('.')
 			if path.count = 1 and path [1] ~ "+" then
 				path := alias_a.split ('.')
-				if alias_graph.stack_top.current_object.attributes.has (path.first) then
+				if alias_graph.stack_top.current_object.attributes.has (create {ALIAS_KEY}.make (path.first)) then
 					alias_object_external (alias_graph.stack_top.current_object.attributes, Void, path, 1)
 				else
 					alias_object_external (alias_graph.stack_top.locals, Void, path, 1)
@@ -990,14 +992,14 @@ feature {NONE} -- utilities
 				if alias_b ~ "{T}.default" then
 					source.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.any_class.compiled_class.class_id)))
 				else
-					if alias_graph.stack_top.current_object.attributes.has (path.first) then
+					if alias_graph.stack_top.current_object.attributes.has (create {ALIAS_KEY}.make (path.first)) then
 						collect_objects_external (alias_graph.stack_top.current_object.attributes, source, path, 1)
 					else
 						collect_objects_external (alias_graph.stack_top.locals, source, path, 1)
 					end
 				end
 				path := alias_a.split ('.')
-				if alias_graph.stack_top.current_object.attributes.has (path.first) then
+				if alias_graph.stack_top.current_object.attributes.has (create {ALIAS_KEY}.make (path.first)) then
 					alias_object_external (alias_graph.stack_top.current_object.attributes, source, path, 1)
 				else
 					alias_object_external (alias_graph.stack_top.locals, source, path, 1)
@@ -1009,15 +1011,18 @@ feature {NONE} -- utilities
 			end
 		end
 
-	collect_objects_external (graph: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING]; source: TWO_WAY_LIST [ALIAS_OBJECT]; path: LIST [STRING]; index: INTEGER)
+	collect_objects_external (graph: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]; source: TWO_WAY_LIST [ALIAS_OBJECT]; path: LIST [STRING]; index: INTEGER)
 			-- collects the object in `source' fom `path' in `graph' to be added after external aliasing
 		require
 			index > 0
+		local
+			val: ALIAS_KEY
 		do
+			create val.make (path [index])
 			if index < path.count then
-				if graph.has_key (path [index]) then
+				if graph.has_key (val) then
 					across
-						graph.at (path [index]) as objs
+						graph.at (val) as objs
 					loop
 						collect_objects_external (objs.item.attributes, source, path, index + 1)
 					end
@@ -1025,9 +1030,9 @@ feature {NONE} -- utilities
 						-- TODO: retrieve info
 				end
 			else
-				if graph.has_key (path [index]) then
+				if graph.has_key (val) then
 					across
-						graph.at (path [index]) as objs
+						graph.at (val) as objs
 					loop
 						source.force (objs.item)
 					end
@@ -1035,18 +1040,20 @@ feature {NONE} -- utilities
 			end
 		end
 
-	alias_object_external (graph: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING]; source: detachable TWO_WAY_LIST [ALIAS_OBJECT]; path: LIST [STRING]; index: INTEGER)
+	alias_object_external (graph: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]; source: detachable TWO_WAY_LIST [ALIAS_OBJECT]; path: LIST [STRING]; index: INTEGER)
 			-- aliased objects in `source' to `path' in `graph'
 			-- if source = Void then the action is {(path, +)} (similar semantics than create path)
 		require
 			index > 0
 		local
 			type: TYPE_A
+			val: ALIAS_KEY
 		do
+			create val.make (path [index])
 			if index < path.count then
-				if graph.has_key (path [index]) then
+				if graph.has_key (val) then
 					across
-						graph.at (path [index]) as objs
+						graph.at (val) as objs
 					loop
 						alias_object_external (objs.item.attributes, source, path, index + 1)
 					end
@@ -1054,28 +1061,32 @@ feature {NONE} -- utilities
 						-- TODO: retrieve info
 				end
 			else
-				if graph.has_key (path [index]) then
+				if graph.has_key (val) then
 					if attached source as s then
 						across
 							s as objs
 						loop
-							if not graph.at (path [index]).has (objs.item) then
+							if not graph.at (val).has (objs.item) then
 								across
-									graph.at (path [index]) as oo
+									graph as g
 								loop
-									oo.item.set_changed
+									if g.key.name ~ val.name then
+										g.key.set_assigned
+									end
 								end
-								graph.at (path [index]).force (objs.item)
+								graph.at (val).force (objs.item)
 							end
 						end
 					else -- create
-						type := graph.at (path [index]).first.type
-						graph.at (path [index]).wipe_out
-						graph.at (path [index]).force (create {ALIAS_OBJECT}.make (type))
+						type := graph.at (val).first.type
+						graph.at (val).wipe_out
+						graph.at (val).force (create {ALIAS_OBJECT}.make (type))
 						across
-							graph.at (path [index]) as oo
+							graph as g
 						loop
-							oo.item.set_changed
+							if g.key.name ~ val.name then
+								g.key.set_assigned
+							end
 						end
 					end
 				end

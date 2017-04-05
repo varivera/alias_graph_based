@@ -95,8 +95,8 @@ feature {NONE} -- Helpers
 		require
 			is_loop_iter
 		local
-			iter_loop_1: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]
-			iter_loop_2: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]
+			iter_loop_1: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
+			iter_loop_2: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
 		do
 			if tracing then
 				printing_vars (3)
@@ -131,7 +131,7 @@ feature {NONE} -- Helpers
 			end
 		end
 
-	replace (v1, v2: ALIAS_OBJECT; in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8])
+	replace (v1, v2: ALIAS_OBJECT; in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
 			-- replaces v1 by v2 in in.values (recursively)
 		do
 			across
@@ -186,7 +186,7 @@ feature {NONE} -- Helpers
 					across
 						deletions.item as values
 					loop
-						restore_deleted (root.current_object, current_routine, values.key, values.item.path, 1, values.item.obj)
+						restore_deleted (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
 						if attached cond_add as conditional then
 							across
 								values.item.obj as to_add

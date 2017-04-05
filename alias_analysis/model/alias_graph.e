@@ -40,12 +40,12 @@ feature
 
 	stack_push (a_current_object: ALIAS_OBJECT; a_routine: PROCEDURE_I;
 				ent: TWO_WAY_LIST [STRING];
-				ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]; qualified_call: BOOLEAN)
+				ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]; qualified_call: BOOLEAN)
 			-- adds a context `a_routine' to the ALIAS_GRAPH having a ref to `a_current_object'
 			--  routine `a_routine' was called from entity `ent' in `qualified_call'
 		local
 			l_ent: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]
-			l_local_ent: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]
+			l_local_ent: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
 		do
 			if stack.count > 1 then
 				l_ent := stack.last.caller_path.twin
@@ -59,7 +59,7 @@ feature
 				l_local_ent.extend (ent_local)
 			end
 			stack.extend (create {ALIAS_ROUTINE}.make (
-						a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]}.make (16),
+						a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]}.make (16),
 						l_ent, l_local_ent))
 
 				-- to retrieve the class in which a_routine is
@@ -76,7 +76,7 @@ feature
 			update_class_atts (a_routine.access_class, stack_top.current_object.attributes)
 		end
 
-	update_class_atts (a_class: CLASS_C; obj_vars: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING])
+	update_class_atts (a_class: CLASS_C; obj_vars: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
 			-- updates, in the graph, the class attributes of class `a_class'
 		local
 			l_obj: TWO_WAY_LIST [ALIAS_OBJECT]
@@ -84,11 +84,11 @@ feature
 			across
 				a_class.constant_features as const
 			loop
-				if not obj_vars.has (const.item.name_32) then
+				if not obj_vars.has (create {ALIAS_KEY}.make (const.item.name_32)) then
 						-- to retrieve their types and to add them to the stack
 					create l_obj.make
 					l_obj.force (create {ALIAS_OBJECT}.make (const.item.type))
-					obj_vars.force (l_obj, const.item.name_32)
+					obj_vars.force (l_obj, create {ALIAS_KEY}.make (const.item.name_32))
 				end
 			end
 			across
@@ -98,17 +98,17 @@ feature
 					print (att.item.attribute_name)
 					io.new_line
 				end
-				if not obj_vars.has (att.item.attribute_name) then
+				if not obj_vars.has (create {ALIAS_KEY}.make (att.item.attribute_name)) then
 					if att.item.type_i.has_detachable_mark then
 							-- to retrieve their types and to add them to the stack
 						create l_obj.make
 						l_obj.force (create {ALIAS_OBJECT}.make_void)
-						obj_vars.force (l_obj, att.item.attribute_name)
+						obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
 					else
 							-- to retrieve their types and to add them to the stack
 						create l_obj.make
 						l_obj.force (create {ALIAS_OBJECT}.make (att.item.type_i))
-						obj_vars.force (l_obj, att.item.attribute_name)
+						obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
 					end
 
 				end
@@ -132,7 +132,7 @@ feature
 					if attached args.at (i) as type then
 						create l_obj.make
 						l_obj.force (create {ALIAS_OBJECT}.make (type))
-						stack_top.locals.force (l_obj, args_names.at (i))
+						stack_top.locals.force (l_obj, create {ALIAS_KEY}.make (args_names.at (i)))
 					end
 					i := i + 1
 				end
@@ -143,7 +143,7 @@ feature
 				if attached a_routine.e_feature.type as type then
 					create l_obj.make
 					l_obj.force (create {ALIAS_OBJECT}.make (type))
-					stack_top.locals.force (l_obj, "Result")
+					stack_top.locals.force (l_obj, create {ALIAS_KEY}.make ("Result"))
 				else
 						-- TODO
 				end
@@ -173,16 +173,19 @@ feature
 			end
 		end
 
+
 	to_graph: STRING_8
 			-- Returns the graph representation of the Alias Graph (constructs a digraph to be drawn by other tools)
+		local
+			cur_change: CELL [BOOLEAN]
 		do
-			change_graph (stack.last, create {TWO_WAY_LIST [ALIAS_OBJECT]}.make)
-			reset_visiting (stack.last)
+			create cur_change.put (False)
+			change_graph (stack.last, create {TWO_WAY_LIST [ALIAS_KEY]}.make, cur_change)
 			create Result.make_empty
 			Result.append ("digraph g {%N")
 			Result.append ("%Tnode [shape=box]%N")
 			print_nodes (stack.last, create {CELL [NATURAL_32]}.put (0), Result)
-			print_edges (stack.last, Result)
+			print_edges (stack.last, Result, cur_change)
 			Result.append ("}%N")
 		end
 
@@ -209,18 +212,18 @@ feature -- Updating
 				if stack_top.routine.is_function then
 					create atts_mapped.make
 					across
-						stack_top.locals.at ("Result") as objs
+						stack_top.locals.at (create {ALIAS_KEY}.make ("Result")) as objs
 					loop
 						across
 							stack_top.current_object.attributes as attributes
 						loop
 							if attributes.item.has (objs.item) then
-								atts_mapped.force (attributes.key)
+								atts_mapped.force (attributes.key.name)
 									-- TODO: move cursor to the end
 							end
 						end
 					end
-					stack.at (stack.count - 1).map_funct.force (atts_mapped, stack_top.routine.e_feature.name_32)
+					stack.at (stack.count - 1).map_funct.force (atts_mapped, create {ALIAS_KEY}.make (stack_top.routine.e_feature.name_32))
 				end
 				if is_conditional_branch or is_loop_iter then
 					deleting_local_vars (stack_top.routine.e_feature.name_32, stack_top.locals.current_keys)
@@ -266,7 +269,7 @@ feature {NONE} -- Computing
 				across
 					a_cur_node.variables as c
 				loop
-					a_cur_path.extend ([a_cur_node, c.key])
+					a_cur_path.extend ([a_cur_node, c.key.name])
 					across
 						c.item as vars
 					loop
@@ -405,7 +408,7 @@ feature {NONE} -- Computing
 			end
 		end
 
-	print_edges (a_cur_node: ALIAS_VISITABLE; a_output: STRING_8)
+	print_edges (a_cur_node: ALIAS_VISITABLE; a_output: STRING_8; cur_change: CELL [BOOLEAN])
 		require
 			a_cur_node /= Void
 			a_output /= Void
@@ -413,8 +416,14 @@ feature {NONE} -- Computing
 			if a_cur_node.visited then
 				a_cur_node.visited := False
 				if attached {ALIAS_ROUTINE} a_cur_node as l_ar then
-					a_output.append ("%T" + a_cur_node.visiting_data.last + "->" + l_ar.current_object.visiting_data.last + "[label=<Current>]%N")
-					print_edges (l_ar.current_object, a_output)
+					a_output.append ("%T" + a_cur_node.visiting_data.last + "->" + l_ar.current_object.visiting_data.last + "["+
+					if cur_change.item then
+							"color=red "
+						else
+							""
+						end
+					+"label=<Current>]%N")
+					print_edges (l_ar.current_object, a_output, cur_change)
 				end
 				across
 					a_cur_node.variables as c
@@ -424,31 +433,31 @@ feature {NONE} -- Computing
 					loop
 
 						a_output.append ("%T" + a_cur_node.visiting_data.last + "->" + vars.item.visiting_data.last + "["+
-						if vars.item.changed then
+						if c.key.assigned then
 							"color=red "
 						else
 							""
 						end
-						+"label=<" + c.key + ">]%N")
-						print_edges (vars.item, a_output)
+						+"label=<" + c.key.name + ">]%N")
+						print_edges (vars.item, a_output, cur_change)
 					end
 				end
 			end
 		end
 
-	change_graph (a_cur_node: ALIAS_VISITABLE; path: TWO_WAY_LIST [ALIAS_OBJECT])
-			-- complete the graph with 'changed' information: updates the graph so ALIAS_OBJECT
+	change_graph (a_cur_node: ALIAS_VISITABLE; path: TWO_WAY_LIST [ALIAS_KEY]; cur_change: CELL [BOOLEAN])
+			-- complete the graph with 'changed' information: updates the graph so entities
 			-- 		marked nodes are reachable from 'root'
 		require
 			a_cur_node /= Void
 			path /= Void
 		local
-			tmp: TWO_WAY_LIST [ALIAS_OBJECT]
+			tmp: TWO_WAY_LIST [ALIAS_KEY]
 		do
 			if not a_cur_node.visited then
 				a_cur_node.visited := True
 				if attached {ALIAS_ROUTINE} a_cur_node as l_ar then
-					change_graph (l_ar.current_object, path)
+					change_graph (l_ar.current_object, path, cur_change)
 				end
 				across
 					a_cur_node.variables as c
@@ -462,18 +471,23 @@ feature {NONE} -- Computing
 						loop
 							tmp.force (p.item)
 						end
-						if vars.item.changed then
+						if c.key.assigned then
+							if not cur_change.item then
+								cur_change.put (True)
+							end
 							across
 								tmp as p
 							loop
-								p.item.set_changed
+								p.item.set_assigned
 							end
 						else
-							tmp.force (vars.item)
+							tmp.force (c.key)
+							change_graph (vars.item, tmp,cur_change)
+
 						end
-						change_graph (vars.item, tmp)
 					end
 				end
+				a_cur_node.visited := False
 			end
 		end
 
@@ -535,27 +549,27 @@ feature -- Managing Conditionals
 			if is_conditional_branch then
 				alias_cond.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
 					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
 			end
 			if is_loop_iter then
 				alias_loop.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
 					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
 			end
 
 			if is_dyn_bin then
 				alias_dyn.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
 					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
 			end
 
 				-- in case of recursion
 			stack_top.alias_pos_rec.updating_a_d (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
 					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
 		end
 
@@ -568,10 +582,10 @@ feature -- Managing Conditionals
 				--alias_cond.forget_att (target.variable_name, target.alias_object,
 				--						(not (target.variable_name ~ "Result")) and (not stack_top.locals.has (target.variable_name)))
 
-			alias_cond.forget_att (target.variable_name, target.variable_name, target.alias_object, source.alias_object, (not (target.variable_name ~ "Result")) and (not stack_top.locals.has (target.variable_name)))
+			alias_cond.forget_att (target.variable_name, target.variable_name, target.alias_object, source.alias_object, (not (target.variable_name ~ "Result")) and (not stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))))
 		end
 
-	deleting_local_vars (function_name: STRING; locals: ARRAY [STRING])
+	deleting_local_vars (function_name: STRING; locals: ARRAY [ALIAS_KEY])
 			-- updates the sets `additions and `deletions' deleting local variables that will no be of any used outside a feature
 		require
 			is_conditional_branch or is_loop_iter or is_dyn_bin
@@ -664,10 +678,10 @@ feature -- Managing Recursion
 	is_recursive_fix_point: BOOLEAN
 			-- is the analysis in a recursion and it already reached a fix point?
 
-	rec_last_locals: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]
+	rec_last_locals: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]
 			-- points to the last locals in a previous recursive call
 
-	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]]
+	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]]
 			-- additions and deletions of the previous recursive calls.
 			-- TODO: To improve
 
@@ -685,7 +699,7 @@ feature -- Managing Recursion
 			stack_top.alias_pos_rec.finalising_recursive_call (stack.first, stack_top, pre_add, pre_del)
 		end
 
-	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]
+	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
 			-- returns the entities to be added to deletion after a conditional
 		do
 			Result := alias_cond.inter_deletion
@@ -753,7 +767,7 @@ feature {NONE} -- Access
 
 feature --{ALIAS_GRAPH} -- TO DELETE
 
-	print_atts_depth (c: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8])
+	print_atts_depth (c: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
 		do
 			if tracing then
 				print ("Atts Deep%N")
@@ -763,7 +777,7 @@ feature --{ALIAS_GRAPH} -- TO DELETE
 			end
 		end
 
-	reset (in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8])
+	reset (in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
 		do
 			across
 				in as links
@@ -795,7 +809,7 @@ feature --{ALIAS_GRAPH} -- TO DELETE
 		--			end
 		--		end
 
-	print_atts_depth_help (in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]; i: INTEGER)
+	print_atts_depth_help (in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]; i: INTEGER)
 		local
 			tab: STRING
 		do
@@ -805,7 +819,11 @@ feature --{ALIAS_GRAPH} -- TO DELETE
 					in as links
 				loop
 					print (tab)
-					print (links.key + ": [")
+					print (links.key.name)
+					if links.key.assigned then
+						print ("*")
+					end
+					print (": [")
 					across
 						links.item as vals
 					loop
@@ -876,7 +894,7 @@ feature --{ALIAS_GRAPH} -- TO DELETE
 					across
 						t.variables as var
 					loop
-						print ("  " + tab + var.key + "%N")
+						print ("  " + tab + var.key.name + "%N")
 						across
 							var.item as att
 						loop
@@ -901,6 +919,24 @@ feature --{ALIAS_GRAPH} -- TO DELETE
 					print_alias_visitable (ar.current_object, i * 3)
 				elseif attached {ALIAS_OBJECT} t as ao then
 					print (tab + "type: " + ao.out + "%N")
+				end
+			end
+		end
+
+	all_true (a_cur_node: ALIAS_VISITABLE)
+		do
+			print (a_cur_node.visited)
+			io.new_line
+			if attached {ALIAS_ROUTINE} a_cur_node as l_ar then
+				all_true (l_ar.current_object)
+			end
+			across
+				a_cur_node.variables as c
+			loop
+				across
+					c.item as vars
+				loop
+					all_true (vars.item)
 				end
 			end
 		end

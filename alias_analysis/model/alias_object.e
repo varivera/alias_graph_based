@@ -31,10 +31,9 @@ feature {NONE}
 					-- all fields of the Array
 				create l_obj.make
 				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (a_type.system.any_class.compiled_class.class_id)))
-				attributes.force (l_obj, "items")
+				attributes.force (l_obj, create {ALIAS_KEY}.make ("items"))
 			end
 			create entity.make
-			create entity_local.make
 		ensure
 			type = a_type
 			attributes /= Void
@@ -42,20 +41,17 @@ feature {NONE}
 		end
 
 	make_void
-		local
-			l_obj: TWO_WAY_LIST [ALIAS_OBJECT]
 		do
 			create {VOID_A} type
 			create attributes.make (16)
 			create entity.make
-			create entity_local.make
 		ensure
 			type = Void
 			attributes /= Void
 			attributes.is_empty
 		end
 
-	make_atts (a_type: TYPE_A; a_atts: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8])
+	make_atts (a_type: TYPE_A; a_atts: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT],ALIAS_KEY])
 			-- creates an alias object with type `a_type' and attributes `a_atts'
 		require
 			a_type /= Void
@@ -63,7 +59,6 @@ feature {NONE}
 			type := a_type
 			attributes := a_atts
 			create entity.make
-			create entity_local.make
 		ensure
 			type = a_type
 			attributes /= Void
@@ -75,33 +70,13 @@ feature {ANY}
 
 	entity: TWO_WAY_LIST [STRING] assign set_entity
 			-- entity that called the Object
-
-	entity_local: TWO_WAY_LIST [like attributes] assign set_entity_local
-			-- stores the local attributes of the entity that called the current object
-
-	changed: BOOLEAN
-		-- used for Change Analysis. It answer the question
-		-- does the currrent object belong to the frame
-
 feature {ANY}
 
 	set_entity (name: TWO_WAY_LIST [STRING])
 		do
 			entity := name
 		end
-
-	set_entity_local (ent_local: TWO_WAY_LIST [like attributes])
-			-- sets the entity_local variable
-		do
-			entity_local := ent_local
-		end
-
-	set_changed
-			-- mark the current object as changed
-		do
-			changed := True
-		end
-
+		
 	out: STRING_8
 		do
 			if attached {CL_TYPE_A} type then

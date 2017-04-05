@@ -32,7 +32,7 @@ feature {ALIAS_ROUTINE} -- Initialisation
 feature -- Managing recursion
 
 	finalising_recursive_call (root, current_routine: ALIAS_ROUTINE; add, del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT];
-						path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING]])
+						path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]])
 			-- restores the graph
 		do
 			additions := add
@@ -61,7 +61,7 @@ feature -- Managing recursion
 
 feature --	Updating deletions (needed in case of conditionals)
 
-	update_del (to_add_del: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], STRING])
+	update_del (to_add_del: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY])
 			-- Updates `deletions' list with information gathered from {ALIAS_COND} -> `to_add_del'
 		do
 			across

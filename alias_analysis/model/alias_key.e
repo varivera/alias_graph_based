@@ -1,57 +1,74 @@
+note
+	description: "Provides the key for HASH MAP variabes"
+	author: ""
+	date: "$Date$"
+	revision: "$Revision$"
 
-deferred class
-	ALIAS_VISITABLE
-
+class
+	ALIAS_KEY
 inherit
+	HASHABLE
+		rename
+			is_equal as is_equal_hashable,
+			out as out_hashable
+		end
+
 	ANY
-		undefine
+		redefine
+			is_equal,
 			out
 		select
+			is_equal,
 			out
 		end
 
-	TRACING
-		rename out as out_tracing end
+create
+	make
 
-feature {ANY}
-
-	variables: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY] assign set_variables
-			-- `variables' stores the ALIAS_OBJECT associated to each class attribute
-			--		It is modeled using a list in case of Conditionals or Loops (alternatives aliases)
-			-- variables [_].first -> base
-
-	visited: BOOLEAN assign set_visited
-
-	visiting_data: TWO_WAY_LIST [STRING_8]
-
-feature {ANY}
-
-	set_visited (a_visited: like visited)
+feature -- Initialisation
+	make (a_key: STRING)
+		require
+			a_key /= Void
+			not a_key.is_empty
 		do
-			visited := a_visited
+			name := a_key
 		end
 
-	add_visiting_data (a_data: STRING_8)
+feature
+	set_assigned
+			-- sets variable assigned
 		do
-			if visiting_data = Void then
-				create visiting_data.make
-			end
-			visiting_data.extend (a_data)
+			assigned := True
 		end
 
-	clear_visiting_data
+
+feature -- Access
+	name: STRING
+			-- name of the variable
+
+	assigned: BOOLEAN
+			-- has the current variable being assigned
+
+feature -- Redefinition
+	hash_code: INTEGER
+			-- Hash code value
 		do
-			visiting_data := Void
+			Result := name.hash_code
 		end
 
-	set_variables (new_variables: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
-			-- sets `variables' to `new_variables'
+	is_equal (other: like Current): BOOLEAN
+			-- from {ANY}
 		do
-			variables := new_variables
+			Result := other.name ~ name
+		end
+
+	out: STRING
+		do
+			Result := name
 		end
 
 invariant
-	variables /= Void
+	attached name as n and then not n.is_empty
 
 note
 	copyright: "Copyright (c) 1984-2017, Eiffel Software"

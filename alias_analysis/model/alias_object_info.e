@@ -18,7 +18,7 @@ create
 
 feature {NONE}
 
-	make_variable (a_context_routine: PROCEDURE_I; a_variable_map: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]; a_variable_name: STRING_8)
+	make_variable (a_context_routine: PROCEDURE_I; a_variable_map: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]; a_variable_name: STRING_8)
 		require
 			a_context_routine /= Void
 			a_variable_map /= Void
@@ -30,12 +30,12 @@ feature {NONE}
 				print_atts_depth (variable_map)
 			end
 			variable_name := a_variable_name
-			alias_object := a_variable_map [a_variable_name]
+			alias_object := a_variable_map [create {ALIAS_KEY}.make (a_variable_name)]
 		ensure
 			context_routine = a_context_routine
 			variable_map = a_variable_map
 			variable_name = a_variable_name
-			alias_object = a_variable_map [a_variable_name]
+			alias_object = a_variable_map [create {ALIAS_KEY}.make (a_variable_name)]
 		end
 
 	make_object (a_alias_object: TWO_WAY_LIST [ALIAS_OBJECT])
@@ -63,7 +63,7 @@ feature -- {NONE}
 
 	context_routine: PROCEDURE_I
 
-	variable_map: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]
+	variable_map: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]
 
 feature
 
@@ -99,7 +99,7 @@ feature {ANY}
 				if tracing then
 					print_atts_depth (variable_map)
 				end
-				variable_map [variable_name] := l_obj
+				variable_map [create {ALIAS_KEY}.make (variable_name)] := l_obj
 				if tracing then
 					print_atts_depth (variable_map)
 				end
@@ -110,7 +110,7 @@ feature {ANY}
 					create l_obj.make
 					l_obj.force (create {ALIAS_OBJECT}.make (a_alias_object.item.type))
 					alias_object := l_obj
-					variable_map [variable_name] := alias_object
+					variable_map [create {ALIAS_KEY}.make (variable_name)] := alias_object
 						--				across
 						--					a_alias_object.attributes as c
 						--				loop
@@ -136,7 +136,7 @@ feature {ANY}
 					if tracing then
 						print_atts_depth (variable_map)
 					end
-					variable_map [variable_name] := l_obj
+					variable_map [create {ALIAS_KEY}.make (variable_name)] := l_obj
 					if tracing then
 						print_atts_depth (variable_map)
 					end
@@ -196,7 +196,7 @@ feature {ANY}
 		do
 			create Result.make
 			across
-				variable_map.at (name) as vals
+				variable_map.at (create {ALIAS_KEY}.make (name)) as vals
 			loop
 				Result.force (vals.item)
 			end
@@ -243,7 +243,7 @@ feature --Redefinition
 				variable_map as var
 			loop
 				Result := Result + "key: "
-				Result := Result + var.key
+				Result := Result + var.key.name
 				across
 					var.item as i
 				loop
@@ -256,7 +256,7 @@ feature --Redefinition
 
 feature -- Todelete
 
-	print_atts_depth (c: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8])
+	print_atts_depth (c: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
 		do
 			if tracing then
 				print ("Atts Deep%N")
@@ -266,7 +266,7 @@ feature -- Todelete
 			end
 		end
 
-	reset (in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8])
+	reset (in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
 		do
 			across
 				in as links
@@ -282,7 +282,7 @@ feature -- Todelete
 			end
 		end
 
-	print_atts_depth_help (in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]; i: INTEGER)
+	print_atts_depth_help (in: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]; i: INTEGER)
 		local
 			tab: STRING
 		do
@@ -292,7 +292,7 @@ feature -- Todelete
 					in as links
 				loop
 					print (tab)
-					print (links.key + ": [")
+					print (links.key.name + ": [")
 					across
 						links.item as vals
 					loop
