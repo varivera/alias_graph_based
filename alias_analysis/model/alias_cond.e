@@ -46,7 +46,7 @@ feature -- Managing Conditionals Branches
 					if tracing then
 						printing_vars (1)
 					end
-					restore_added (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
+					restore_added (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_",  values.item.path, 1, values.item.obj)
 						--restore_added (objs, values.key, values.item.path, 1, values.item.obj)
 				end
 				additions.forth
@@ -65,18 +65,22 @@ feature -- Managing Conditionals Branches
 				across
 					deletions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
+					restore_deleted (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
 				end
 				deletions.forth
 			end
 		end
 
-	restore_added (current_object: ALIAS_OBJECT; current_routine: ALIAS_ROUTINE; name_entity: STRING; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; index: INTEGER; new_object: TWO_WAY_LIST [ALIAS_OBJECT])
+	restore_added (current_object: ALIAS_OBJECT; current_routine: ALIAS_ROUTINE; name_entity, feat_name: STRING; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; index: INTEGER; new_object: TWO_WAY_LIST [ALIAS_OBJECT])
 			-- deletes in `current_object'.`path' the added object: `new_object'
 			-- This command is used to restore the state of the graph on exit of conditional branch
 		local
 			c_objs: TWO_WAY_LIST [ALIAS_OBJECT]
+			real_name: STRING
 		do
+			create real_name.make_from_string (name_entity)
+			real_name.replace_substring_all (feat_name, "")
+
 			if tracing then
 				print (name_entity)
 				io.new_line
@@ -114,8 +118,8 @@ feature -- Managing Conditionals Branches
 					c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (name_entity))
 				elseif name_entity.ends_with ("_Result") then
 					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make ("Result"))
-				elseif current_routine.locals.has (create {ALIAS_KEY}.make (name_entity)) then
-					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (name_entity))
+				elseif current_routine.locals.has (create {ALIAS_KEY}.make (real_name)) then
+					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (real_name))
 				end
 				across
 					new_object as n_o
@@ -134,12 +138,25 @@ feature -- Managing Conditionals Branches
 					if c_objs.has (n_o.item) then
 						if tracing then
 							io.new_line
-							print (n_o.item)
+							print ("to search: ")
+							print (n_o.item.out2)
+							print ("%Nlist: ")
+							across
+								c_objs as aa
+							loop
+								io.new_line
+								print (aa.item.out2)
+							end
+
 							io.new_line
 							print (c_objs.has (n_o.item))
 
 						end
+						c_objs.start
 						c_objs.search (n_o.item)
+						if tracing then
+							print (c_objs.exhausted)
+						end
 						c_objs.remove
 					end
 					if tracing then
@@ -167,13 +184,42 @@ feature -- Managing Conditionals Branches
 				loop
 					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
 						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))
-					elseif current_routine.locals.has_key (create {ALIAS_KEY}.make (paths.item)) then
-						c_objs := current_routine.locals [create {ALIAS_KEY}.make (paths.item)]
+					elseif current_routine.locals.has (create {ALIAS_KEY}.make (paths.item)) then
+						if tracing then
+							print ("%N<====%N")
+						end
+						c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (paths.item))
 					end
+
+
+					if Tracing then
+						print ("path.item: ")
+						print (paths.item)
+						Io.new_line
+						print ("Attributes:%N")
+						across
+							current_object.attributes.current_keys as kk
+						loop
+							print ("        ")
+							print (kk.item)
+							Io.new_line
+						end
+
+						print ("locals")
+						Io.new_line
+						across
+							current_routine.locals.current_keys as kk
+						loop
+							print ("        ")
+							print (kk.item)
+							Io.new_line
+						end
+					end
+
 					across
 						c_objs as objs
 					loop
-						restore_added (objs.item, current_routine, name_entity, path, index + 1, new_object)
+						restore_added (objs.item, current_routine, name_entity, feat_name, path, index + 1, new_object)
 					end
 				end
 			end
@@ -201,7 +247,7 @@ feature -- Managing Conditionals Branches
 			across
 				deletions.at (n_conditional.last.index_del) as values
 			loop
-				restore_added (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
+				restore_added (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
 			end
 				-- delete the info in deletions and in n_conditional
 			from
@@ -224,7 +270,7 @@ feature -- Managing Conditionals Branches
 				across
 					additions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key.name, values.item.path, 1, values.item.obj)
+					restore_deleted (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
 				end
 				additions.forth
 			end
@@ -319,7 +365,7 @@ feature -- Managing Conditionals Branches
 
 feature -- Information to Recursion
 
-	inter_deletion: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
+	inter_deletion: HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
 			--after the execution of a conditional, `inter_deletion' will store the entities of those deleted links that
 			-- need to be put back on, e.g. if C then a := b else a:= c end: entity 'a' will be in the deletion list
 			-- regardless which branch the execution does, 'a' will be pointing to something new

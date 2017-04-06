@@ -59,7 +59,7 @@ feature -- Redefinition
 	is_equal (other: like Current): BOOLEAN
 			-- from {ANY}
 		do
-			Result := other.name ~ name
+			Result := other.name.out ~ name.out
 		end
 
 	out: STRING

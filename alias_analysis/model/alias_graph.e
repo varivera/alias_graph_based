@@ -76,6 +76,13 @@ feature
 			update_class_atts (a_routine.access_class, stack_top.current_object.attributes)
 		end
 
+	update_class_atts_routine_in_obj (a_routine: PROCEDURE_I; obj: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
+			-- updates, in `obj', the class attributes in which `a_routine' is
+			-- it adds a Void reference to those detachable references.
+		do
+			update_class_atts (a_routine.access_class, obj)
+		end
+
 	update_class_atts (a_class: CLASS_C; obj_vars: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
 			-- updates, in the graph, the class attributes of class `a_class'
 		local
@@ -530,6 +537,7 @@ feature -- Managing Conditionals
 			-- updates the sets `additions' and `deletions' accordingly.
 		do
 			if tracing then
+				alias_cond.printing_vars (1)
 				if stack.count > 1 then
 					print (stack_top.routine.e_feature.name_32)
 				end
@@ -548,27 +556,35 @@ feature -- Managing Conditionals
 				alias_cond.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
 					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
-					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
+					stack_top.routine.e_feature.name_32 + "_",
+					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))
+					)
 			end
 			if is_loop_iter then
 				alias_loop.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
 					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
-					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
+					stack_top.routine.e_feature.name_32 + "_",
+					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))
+					)
 			end
 
 			if is_dyn_bin then
 				alias_dyn.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
 					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
-					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
+					stack_top.routine.e_feature.name_32 + "_",
+					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))
+					)
 			end
 
 				-- in case of recursion
 			stack_top.alias_pos_rec.updating_a_d (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
 					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
-					if stack.count > 1 then (stack_top.routine.e_feature.name_32 + "_") else create {STRING_32}.make_empty end)
+					stack_top.routine.e_feature.name_32 + "_",
+					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))
+					)
 		end
 
 		--forget_att (target: ALIAS_OBJECT_INFO)
@@ -684,7 +700,7 @@ feature -- Managing Recursion
 	rec_last_locals: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]
 			-- points to the last locals in a previous recursive call
 
-	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]]
+	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]]
 			-- additions and deletions of the previous recursive calls.
 			-- TODO: To improve
 
@@ -702,7 +718,7 @@ feature -- Managing Recursion
 			stack_top.alias_pos_rec.finalising_recursive_call (stack.first, stack_top, pre_add, pre_del)
 		end
 
-	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
+	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
 			-- returns the entities to be added to deletion after a conditional
 		do
 			Result := alias_cond.inter_deletion

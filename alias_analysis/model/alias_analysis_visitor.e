@@ -641,7 +641,7 @@ feature {NONE} -- utilities
 			else
 				if a_routine.argument_count = a_parameters.count then
 
-						-- check if there are several version
+						-- check if there are several versions
 					if attached a_target as target and then
 							-- this is indeed a qualified call
 						attached System.eiffel_universe.classes_with_name (target.type.name) as l_classes and then l_classes.count > 0
@@ -692,8 +692,10 @@ feature {NONE} -- utilities
 										alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 										stop (355)
 									end
+									alias_graph.update_class_atts_routine_in_obj (l_r, target.attributes)
 									alias_graph.init_feature_version
-									Result := call_routine (a_target, l_r, a_parameters)
+
+									Result := call_routine (target, l_r, a_parameters)
 									alias_graph.restore_graph_dyn
 								end
 							end
