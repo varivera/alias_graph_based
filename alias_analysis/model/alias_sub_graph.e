@@ -38,7 +38,7 @@ feature -- Updating
 
 	updating_A_D (target_name, source_name: STRING; target_object, source_object: TWO_WAY_LIST [ALIAS_OBJECT];
 				target_path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; target_path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]];
-				routine_name: STRING; local_var: BOOLEAN)
+				routine_name: STRING; local_var_target, local_var_source: BOOLEAN)
 			-- updates the sets `additions' and `deletions' accordingly:
 			--	additions -> [`target_name': (`source_name', `source_object', `target_path', `path_locals')]
 			--  deletions -> [`target_name': (`source_name', `source_object', `target_path', `path_locals')]
@@ -74,7 +74,7 @@ feature -- Updating
 			end
 			stop2 (9)
 			--if target_name ~ "Result" then
-			if local_var then
+			if local_var_target then
 				stop2 (10)
 				tup.abs_name := tup.abs_name + routine_name + target_name
 			else
@@ -82,7 +82,7 @@ feature -- Updating
 				tup.abs_name := tup.abs_name + target_name
 			end
 			if attached source_name as sn then
-				if local_var then
+				if local_var_source then
 					tup.name := routine_name + sn
 				else
 					tup.name := sn
@@ -105,7 +105,7 @@ feature -- Updating
 			stop2 (2)
 			tup.obj := obj
 			--if target_name ~ "Result" then
-			if local_var then
+			if local_var_target then
 				additions.last.force (tup, create {ALIAS_KEY}.make (routine_name + target_name))
 			else
 				additions.last.force (tup, create {ALIAS_KEY}.make (target_name))
@@ -135,12 +135,12 @@ feature -- Updating
 				end
 			end
 			--if target_name ~ "Result" then
-			if local_var then
+			if local_var_target then
 				tup.abs_name := tup.abs_name + routine_name + target_name
 			else
 				tup.abs_name := tup.abs_name + target_name
 			end
-			if local_var then
+			if local_var_target then
 				tup.name := routine_name + target_name
 			else
 				tup.name := target_name
@@ -157,7 +157,7 @@ feature -- Updating
 			end
 			tup.obj := obj
 			--if target_name ~ "Result" then
-			if local_var then
+			if local_var_target then
 				deletions.last.force (tup, create {ALIAS_KEY}.make (routine_name + target_name))
 			else
 				deletions.last.force (tup, create {ALIAS_KEY}.make (target_name))
@@ -168,7 +168,169 @@ feature -- Updating
 			end
 		end
 
-	deleting_local_vars (function_name: STRING; func_n: INTEGER; locals: ARRAY [ALIAS_KEY])
+	deleting_local_vars (function_name: STRING; func_n: INTEGER; locals: ARRAY [ALIAS_KEY]; current_atts: ARRAYED_LIST [STRING])
+			-- updates the sets `additions and `deletions' deleting local variables that will no be of
+			-- any used outside a feature
+			-- `func_n' is used to determined whether a variable is a local variable of the corresponding feature
+		require
+			is_in_structure
+		local
+			keys_to_delete: ARRAYED_LIST [ALIAS_KEY]
+
+			local_map: HASH_TABLE [STRING, STRING]
+		do
+			if tracing then
+				print ("%N========%N")
+				printing_vars (1)
+			end
+
+			create local_map.make (0)
+			if locals.count >= 1 then
+					-- local var Result
+				if additions.count > 0 then
+					additions.last.remove (create {ALIAS_KEY}.make (function_name + "_Result"))
+				end
+				if deletions.count > 0 then
+					deletions.last.remove (create {ALIAS_KEY}.make (function_name + "_Result"))
+				end
+
+					-- other local variables
+				if tracing then
+					print ("%N========%N")
+					printing_vars (1)
+				end
+						-- collect the mapping between local variables and class attributes
+				if additions.count >= 1 then
+					across
+						locals as l
+					loop
+						create keys_to_delete.make (0)
+						across
+							additions.last as vals
+						loop
+							if tracing then
+								print ("0: " + (vals.item.name))
+								io.new_line
+								print ("1: " + (function_name+"_"+l.item.name))
+								io.new_line
+								print ("2: " + vals.key.name)
+								io.new_line
+								print ("3: ")
+								print ((function_name+"_"+l.item.name) ~ vals.key.name)
+
+							end
+							if (function_name+"_"+l.item.name) ~ vals.key.name then
+								if tracing then
+									io.new_line
+									print (">"+vals.item.name+"<")
+									io.new_line
+									print ("atts: [")
+									across
+										current_atts as att
+									loop
+										print (att.item)
+										print (", ")
+									end
+									print ("]%N")
+								end
+								if current_atts.has (vals.item.name) then
+									local_map.force (vals.item.name, vals.key.name)
+								end
+								keys_to_delete.force (create {ALIAS_KEY}.make (vals.key.name))
+							end
+						end
+						across
+							keys_to_delete as keys
+						loop
+							additions.last.remove (keys.item)
+							deletions.last.remove (keys.item)
+						end
+					end
+				end
+				if tracing then
+					print ("%N========%N")
+					printing_vars (1)
+				end
+				create keys_to_delete.make (0)
+					-- deleting/mapping from `name'
+				if additions.count >= 1 then
+					across
+						locals as l
+					loop
+						create keys_to_delete.make (0)
+						across
+							additions.last as vals
+						loop
+							if (function_name+"_"+l.item.name) ~ vals.item.name.out and vals.item.path.count = (func_n - 1) then
+								if local_map.has (vals.item.name.out) then
+										-- change
+									vals.item.name.replace_substring_all (vals.item.name.out, local_map.at (vals.item.name.out))
+								else
+										-- remove
+									keys_to_delete.force (create {ALIAS_KEY}.make (vals.item.name.out))
+								end
+							end
+						end
+						across
+							keys_to_delete as keys
+						loop
+							additions.last.remove (keys.item)
+							deletions.last.remove (keys.item)
+						end
+					end
+				end
+				if tracing then
+					print ("%N========%N")
+					printing_vars (1)
+				end
+				create keys_to_delete.make (0)
+					-- deleting/mapping from `path'
+				if additions.count >= 1 then
+					create keys_to_delete.make (0)
+					across
+						locals as l
+					loop
+						across
+							additions.last as vals
+						loop
+
+							across
+								vals.item.path as path
+							loop
+								across
+									path.item as vals2
+								loop
+									if not keys_to_delete.has (create {ALIAS_KEY}.make (vals.key.name)) and
+									 	(function_name+"_"+l.item.name) ~ vals2.item and vals.item.path.count = (func_n - 1)
+									 then
+									 	if local_map.has (vals2.item) then
+												-- change
+											vals2.item.replace_substring_all (l.item.name, local_map.at (vals2.item))
+										else
+												-- remove
+											keys_to_delete.force (create {ALIAS_KEY}.make (vals.key.name.out))
+										end
+									 end
+								end
+							end
+						end
+					end
+					across
+						keys_to_delete as keys
+					loop
+						additions.last.remove (keys.item)
+						deletions.last.remove (keys.item)
+					end
+				end
+			end
+
+			if tracing then
+				print ("%N========%N")
+				printing_vars (1)
+			end
+		end
+
+	deleting_local_vars2 (function_name: STRING; func_n: INTEGER; locals: ARRAY [ALIAS_KEY])
 			-- updates the sets `additions and `deletions' deleting local variables that will no be of
 			-- any used outside a feature
 			-- `func_n' is used to determined whether a variable is a local variable of the corresponding feature

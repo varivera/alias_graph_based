@@ -552,12 +552,14 @@ feature -- Managing Conditionals
 					end
 				end
 			end
+
 			if is_conditional_branch then
 				alias_cond.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
 					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
 					stack_top.routine.e_feature.name_32 + "_",
-					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))
+					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name)),
+					stack_top.locals.has (create {ALIAS_KEY}.make (source.variable_name))
 					)
 			end
 			if is_loop_iter then
@@ -565,7 +567,8 @@ feature -- Managing Conditionals
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
 					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
 					stack_top.routine.e_feature.name_32 + "_",
-					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))
+					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name)),
+					stack_top.locals.has (create {ALIAS_KEY}.make (source.variable_name))
 					)
 			end
 
@@ -574,7 +577,8 @@ feature -- Managing Conditionals
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
 					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
 					stack_top.routine.e_feature.name_32 + "_",
-					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))
+					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name)),
+					stack_top.locals.has (create {ALIAS_KEY}.make (source.variable_name))
 					)
 			end
 
@@ -583,7 +587,8 @@ feature -- Managing Conditionals
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
 					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
 					stack_top.routine.e_feature.name_32 + "_",
-					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name))
+					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name)),
+					stack_top.locals.has (create {ALIAS_KEY}.make (source.variable_name))
 					)
 		end
 
@@ -601,16 +606,27 @@ feature -- Managing Conditionals
 
 	deleting_local_vars (function_name: STRING; locals: ARRAY [ALIAS_KEY])
 			-- updates the sets `additions and `deletions' deleting local variables that will no be of any used outside a feature
+		local
+			current_atts: ARRAYED_LIST [STRING]
 		do
+			create current_atts.make (stack.at (stack.count-1).current_object.attributes.count)
+			print ("%NCount: ")
+			print (stack.count)
+			io.new_line
+			across
+				stack.at (stack.count-1).current_object.attributes.current_keys as keys
+			loop
+				current_atts.force (keys.item.name)
+			end
 			if is_conditional_branch then
-				alias_cond.deleting_local_vars (function_name, stack.count, locals)
+				alias_cond.deleting_local_vars (function_name, stack.count, locals, current_atts)
 			end
 
 			if is_loop_iter then
-				alias_loop.deleting_local_vars (function_name, stack.count, locals)
+				alias_loop.deleting_local_vars (function_name, stack.count, locals, current_atts)
 			end
 			if is_dyn_bin then
-				alias_dyn.deleting_local_vars (function_name, stack.count, locals)
+				alias_dyn.deleting_local_vars (function_name, stack.count, locals, current_atts)
 			end
 		end
 
