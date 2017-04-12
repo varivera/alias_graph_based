@@ -234,6 +234,11 @@ feature -- Updating
 									print ("]%N")
 								end
 								if current_atts.has (vals.item.name) then
+									if tracing then
+										io.new_line
+										print ("key: " +  vals.key.name + " value: " + vals.item.name)
+										io.new_line
+									end
 									local_map.force (vals.item.name, vals.key.name)
 								end
 								keys_to_delete.force (create {ALIAS_KEY}.make (vals.key.name))
@@ -261,7 +266,21 @@ feature -- Updating
 						across
 							additions.last as vals
 						loop
-							if (function_name+"_"+l.item.name) ~ vals.item.name.out and vals.item.path.count = (func_n - 1) then
+							if tracing then
+								io.new_line
+								print (function_name+"_"+l.item.name)
+								io.new_line
+								print (vals.item.name.out)
+								io.new_line
+								print ((function_name+"_"+l.item.name) ~ vals.item.name.out)
+								io.new_line
+								print (" and ")
+								print (vals.item.path.count)
+								print (" = ")
+								print (func_n - 1)
+								io.new_line
+							end
+							if (function_name+"_"+l.item.name) ~ vals.item.name.out then
 								if local_map.has (vals.item.name.out) then
 										-- change
 									vals.item.name.replace_substring_all (vals.item.name.out, local_map.at (vals.item.name.out))
@@ -300,12 +319,28 @@ feature -- Updating
 								across
 									path.item as vals2
 								loop
+									if tracing then
+										io.new_line
+										print (not keys_to_delete.has (create {ALIAS_KEY}.make (vals.key.name)))
+										io.new_line
+										print (l.item.name)
+										print (" ~ ")
+										print (vals2.item)
+										print (" and ")
+										print (vals.item.path.count)
+										print (" = ")
+										print (func_n - 1)
+										io.new_line
+									end
 									if not keys_to_delete.has (create {ALIAS_KEY}.make (vals.key.name)) and
-									 	(function_name+"_"+l.item.name) ~ vals2.item and vals.item.path.count = (func_n - 1)
+									 	l.item.name ~ vals2.item and vals.item.path.count = (func_n - 1)
 									 then
-									 	if local_map.has (vals2.item) then
+									 	if local_map.has (function_name+"_"+vals2.item) then
 												-- change
-											vals2.item.replace_substring_all (l.item.name, local_map.at (vals2.item))
+											if vals.item.abs_name.has_substring (l.item.name) then
+												vals.item.abs_name.replace_substring_all (l.item.name, local_map.at (function_name+"_"+vals2.item))
+											end
+											vals2.item.replace_substring_all (l.item.name, local_map.at (function_name+"_"+vals2.item))
 										else
 												-- remove
 											keys_to_delete.force (create {ALIAS_KEY}.make (vals.key.name.out))
@@ -322,6 +357,61 @@ feature -- Updating
 						deletions.last.remove (keys.item)
 					end
 				end
+
+				if deletions.count >= 1 then
+					create keys_to_delete.make (0)
+					across
+						locals as l
+					loop
+						across
+							deletions.last as vals
+						loop
+
+							across
+								vals.item.path as path
+							loop
+								across
+									path.item as vals2
+								loop
+									if tracing then
+										io.new_line
+										print (not keys_to_delete.has (create {ALIAS_KEY}.make (vals.key.name)))
+										io.new_line
+										print (l.item.name)
+										print (" ~ ")
+										print (vals2.item)
+										print (" and ")
+										print (vals.item.path.count)
+										print (" = ")
+										print (func_n - 1)
+										io.new_line
+									end
+									if not keys_to_delete.has (create {ALIAS_KEY}.make (vals.key.name)) and
+									 	l.item.name ~ vals2.item and vals.item.path.count = (func_n - 1)
+									 then
+									 	if local_map.has (function_name+"_"+vals2.item) then
+												-- change
+											if vals.item.abs_name.has_substring (l.item.name) then
+												vals.item.abs_name.replace_substring_all (l.item.name, local_map.at (function_name+"_"+vals2.item))
+											end
+											vals2.item.replace_substring_all (l.item.name, local_map.at (function_name+"_"+vals2.item))
+										else
+												-- remove
+											keys_to_delete.force (create {ALIAS_KEY}.make (vals.key.name.out))
+										end
+									 end
+								end
+							end
+						end
+					end
+					across
+						keys_to_delete as keys
+					loop
+						additions.last.remove (keys.item)
+						deletions.last.remove (keys.item)
+					end
+				end
+
 			end
 
 			if tracing then
@@ -652,8 +742,14 @@ feature -- Managing merging nodes (for loops and recursion)
 					if current_object.attributes.at (create {ALIAS_KEY}.make (name_entity)) = Void then
 						io.new_line
 						print ("Void")
+						io.new_line
+						print (current_object.attributes.count)
 					end
 				end
+--				if current_object.attributes.at (create {ALIAS_KEY}.make (name_entity)) = Void then
+--					io.new_line
+--					print ("Void")
+--				end
 
 					-- the variable should exist (no need to check)
 				if name_entity.ends_with ("_Result") then
@@ -685,6 +781,8 @@ feature -- Managing merging nodes (for loops and recursion)
 						print_atts_depth (current_routine.locals)
 						io.new_line
 						print (name_entity)
+						io.new_line
+						print (paths.item)
 						io.new_line
 					end
 					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then

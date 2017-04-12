@@ -28,10 +28,13 @@ create
 feature -- Initialisation
 	make (a_key: STRING)
 		require
-			a_key /= Void
-			not a_key.is_empty
+			a_key /= Void implies not a_key.is_empty
 		do
-			name := a_key
+			if attached a_key as a then
+				name := a
+			else
+				name := ""
+			end
 		end
 
 feature

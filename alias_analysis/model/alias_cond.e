@@ -234,6 +234,7 @@ feature -- Managing Conditionals Branches
 		do
 			if tracing then
 				printing_vars (1)
+				print ("==================================%N")
 			end
 			n_conditional.finish
 

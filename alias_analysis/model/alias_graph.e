@@ -610,14 +610,19 @@ feature -- Managing Conditionals
 			current_atts: ARRAYED_LIST [STRING]
 		do
 			create current_atts.make (stack.at (stack.count-1).current_object.attributes.count)
-			print ("%NCount: ")
-			print (stack.count)
-			io.new_line
-			across
-				stack.at (stack.count-1).current_object.attributes.current_keys as keys
-			loop
-				current_atts.force (keys.item.name)
+			if tracing then
+				print ("%NCount: ")
+				print (stack.count)
+				io.new_line
 			end
+			if locals.count > 0 then
+				across
+					stack.at (stack.count-1).current_object.attributes.current_keys as keys
+				loop
+					current_atts.force (keys.item.name)
+				end
+			end
+
 			if is_conditional_branch then
 				alias_cond.deleting_local_vars (function_name, stack.count, locals, current_atts)
 			end

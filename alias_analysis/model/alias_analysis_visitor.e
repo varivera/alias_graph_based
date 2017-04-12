@@ -297,7 +297,7 @@ feature {NONE}
 			safe_process (a_node.else_part)
 
 				--Note: no need to restore the graph: alias_graph.restore_graph
-
+			alias_graph.restore_graph
 			if tracing then
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
