@@ -51,6 +51,96 @@ feature {NONE}
 			feature_view.editor.clear_window
 		end
 
+	class_to_analyse (class_: CLASS_C; actual_class_name: STRING)
+			-- Apply alias analysis to all features of class `class_'
+		local
+			l_visitor: ALIAS_ANALYSIS_VISITOR
+			routine: PROCEDURE_I
+			i: INTEGER
+		do
+			print ("Analysis%N")
+			from
+				i := 1
+			until
+				i > class_.feature_table.count or class_.is_deferred
+			loop
+				if not class_.feature_table.features.at (i).is_attribute
+					and class_.feature_table.features.at (i).e_feature.associated_class.class_id = class_.class_id
+					and attached {E_ROUTINE} class_.feature_table.features.at (i).e_feature as r
+					and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as p
+						-- TODO
+					and not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out")
+					and (class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code"))
+					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_insert_left"))
+					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_index"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "index"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
+					and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "start"))
+					and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "finish"))
+					and (class_.name ~ "FLAT_ARRAY" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "linear_representation"))
+					and (class_.name ~ "FLAT_ARRAY" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "do_if_with_index"))
+					and (class_.name ~ "FLAT_ARRAY" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "do_all_with_index"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "has"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "index_of"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "sequential_has"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "sequential_index_of"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "sequential_occurrences"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "sequential_search"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "occurrences"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "is_equal"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "search"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "append"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "merge_left"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "merge_right"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "prune"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "prune_all"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "ll_prune"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "duplicate"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "new_cursor"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "do_all"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "do_if"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "for_all"))
+					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "there_exists"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "new_cursor"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "ll_move"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "merge_left"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "merge_right"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "put_front"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "put_left"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "put_right"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "ll_merge_right"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "ll_put_front"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "ll_put_right"))
+					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "remove"))
+				then
+					print ("====Feature: ")
+					print (class_.feature_table.features.at (i).e_feature.name_32)
+					print ("==(")
+					print (actual_class_name)
+					print (")==========")
+					io.new_line
+					routine := p
+					if class_.feature_table.features.at (i).e_feature.is_function implies not class_.feature_table.features.at (i).e_feature.type.actual_type.name.starts_with ("MML") then
+						create l_visitor.make (routine, Void)
+						routine.body.process (l_visitor)
+						io.new_line
+						print (l_visitor.alias_graph.to_string)
+						io.new_line
+						print (l_visitor.alias_graph.to_graph)
+						io.new_line
+
+							--								(create {EXECUTION_ENVIRONMENT}).launch (
+							--									"echo %"" + l_visitor.alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
+							--								)
+					end
+				end
+				i := i + 1
+			end
+		end
+
 	clusters (c: CLUSTER_I)
 			-- Apply alias analysis to all classes in cluster `c' (including nested
 			-- clusters)
@@ -66,10 +156,7 @@ feature {NONE}
 			across
 				c.classes as cla
 			loop
-				if not cla.item.actual_class.name.starts_with ("MML_") and
-					not (cla.item.actual_class.name ~ "V_STRING_INPUT") and
-					not (cla.item.actual_class.name ~ "V_DEFAULT")
-				then
+				if not cla.item.actual_class.name.starts_with ("MML_") and not (cla.item.actual_class.name ~ "V_STRING_INPUT") and not (cla.item.actual_class.name ~ "V_DEFAULT") then
 					if System.eiffel_universe.classes_with_name (cla.item.actual_class.name).count = 1 then
 						print ("Class being analysed: ")
 						print (cla.item.actual_class.name)
@@ -78,52 +165,7 @@ feature {NONE}
 						io.new_line
 						io.new_line
 						class_ := System.eiffel_universe.classes_with_name (cla.item.actual_class.name).first.compiled_class
-						print ("Analysis%N")
-						from
-							i := 1
-						until
-							i > class_.feature_table.count or
-							class_.is_deferred
-						loop
-							if not class_.feature_table.features.at (i).is_attribute
-								and class_.feature_table.features.at (i).e_feature.associated_class.class_id = class_.class_id
-								and attached {E_ROUTINE} class_.feature_table.features.at (i).e_feature as r
-								and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as p
-							-- TODO
-								and not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out")
-								and (class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code"))
-								and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_insert_left"))
-								and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
-								and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_index"))
-								and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "index"))
-								and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
-								and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "start"))
-								and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "finish"))
-							then
-								print ("====Feature: ")
-								print (class_.feature_table.features.at (i).e_feature.name_32)
-								print ("==(")
-								print (cla.item.actual_class.name)
-								print (")==========")
-								io.new_line
-								routine := p
-								if class_.feature_table.features.at (i).e_feature.is_function implies
-									not class_.feature_table.features.at (i).e_feature.type.actual_type.name.starts_with ("MML") then
-									create l_visitor.make (routine, Void)
-									routine.body.process (l_visitor)
-									io.new_line
-									print (l_visitor.alias_graph.to_string)
-									io.new_line
-									print (l_visitor.alias_graph.to_graph)
-									io.new_line
-
-	--								(create {EXECUTION_ENVIRONMENT}).launch (
-	--									"echo %"" + l_visitor.alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
-	--								)
-								end
-							end
-							i := i + 1
-						end
+						class_to_analyse (class_, cla.item.actual_class.name)
 					end
 				end
 			end
@@ -144,6 +186,22 @@ feature {NONE}
 			print ("%N=================================================================%N")
 			if attached {CLUSTER_STONE} a_stone as fs then
 				clusters (fs.cluster_i)
+			elseif attached {CLASSC_STONE} a_stone as c and then
+				attached {CLASS_C} c.class_i.compiled_class as cla
+			then
+				if not cla.name.starts_with ("MML_")
+					and not (cla.name ~ "V_STRING_INPUT")
+					and not (cla.name ~ "V_DEFAULT") then
+					if System.eiffel_universe.classes_with_name (cla.name).count = 1 then
+						print ("Class being analysed: ")
+						print (cla.name)
+						print (": ")
+						print (System.eiffel_universe.classes_with_name (cla.name).count)
+						io.new_line
+						io.new_line
+						class_to_analyse (cla, cla.name)
+					end
+				end
 			end
 		end
 
