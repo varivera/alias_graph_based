@@ -31,6 +31,29 @@ create
 
 create {FLAT_TWO_WAY_LIST}
 	make_sublist
+feature -- Testing
+	t1
+		local
+			p: like first_element
+		do
+			if True then
+				p := active
+			end
+			t2
+		end
+
+	t2
+		do
+			t1
+		end
+
+
+	test_: FLAT_TWO_WAY_LIST_ITERATION_CURSOR [G]
+			-- Fresh cursor associated with current structure
+		do
+			create Result.make (Current)
+			Result.start
+		end
 
 feature {NONE} -- Initialization
 
@@ -398,15 +421,7 @@ feature {NONE} -- Cursor movement
 					move (new_index)
 				end
 			end
-		ensure -- from CHAIN
-			too_far_right: (old index + i > count) implies exhausted
-			too_far_left: (old index + i < 1) implies exhausted
-			expected_index: (not exhausted) implies (index = old index + i)
---		ensure then -- from LINKED_LIST
-			moved_if_inbounds: ((old index + i) >= 0 and (old index + i) <= (count + 1)) implies index = (old index + i)
-			before_set: (old index + i) <= 0 implies before
-			after_set: (old index + i) >= (count + 1) implies after
-		end
+	end
 
 feature -- Element change
 

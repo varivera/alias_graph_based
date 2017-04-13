@@ -9,6 +9,7 @@
 			<file_rule>
 				<exclude>.svn</exclude>
 			</file_rule>
+			<cluster name="test_local" location="C:\Users\v.rivera\Documents\alias\alias_graph_based\EiffelBase+\test\mml\test_local\"/>
 		</cluster>
 		<cluster name="structures" location=".\structures\">
 			<file_rule>

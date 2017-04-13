@@ -68,7 +68,7 @@ feature -- Managing Feature Versions
 				across
 					deletions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32, values.item.path, 1, values.item.obj)
+					restore_deleted (root.locals, root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32, values.item.path, 1, values.item.obj)
 				end
 				deletions.forth
 			end
@@ -235,7 +235,7 @@ feature -- Managing Feature Versions
 				across
 					additions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32, values.item.path, 1, values.item.obj)
+					restore_deleted (root.locals, root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32, values.item.path, 1, values.item.obj)
 				end
 				additions.forth
 			end

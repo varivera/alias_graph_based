@@ -1,21 +1,25 @@
-class
-	FLAT_ARRAY [G]
-
+class FLAT_ARRAY [G]
 inherit
 	FLAT_READABLE_INDEXABLE [G]
-		redefine
-			copy,
-			is_equal
-		end
+		redefine 	copy, is_equal end
 
 create
-	make_empty,
-	make,
-	make_filled
+	make_empty, make, make_filled
 
 create {FLAT_ARRAY, FLAT_ARRAYED_LIST, FLAT_ARRAYED_SET}
 	make_from_array,
 	make_from_special
+
+feature -- Testing
+
+	t1 (tmp: FLAT_ARRAYED_LIST [G])
+			-- Representation as a linear structure
+		do
+
+			if True then
+				tmp.tt
+			end
+		end
 
 feature -- Initialization
 
@@ -736,16 +740,16 @@ feature -- Conversion
 			temp: FLAT_ARRAYED_LIST [G]
 			i: INTEGER_32
 		do
---			create temp.make (capacity)
---			from
---				i := lower
---			until
---				i > upper
---			loop
---				temp.extend (item (i))
---				i := i + 1
---			end
---			Result := temp
+			create temp.make (capacity)
+			from
+				i := lower
+			until
+				i > upper
+			loop
+				temp.extend (item (i))
+				i := i + 1
+			end
+			Result := temp
 		end
 
 feature -- Duplication

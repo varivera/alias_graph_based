@@ -46,7 +46,7 @@ feature -- Managing Conditionals Branches
 					if tracing then
 						printing_vars (1)
 					end
-					restore_added (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_",  values.item.path, 1, values.item.obj)
+					restore_added (root.locals, root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_",  values.item.path, 1, values.item.obj)
 						--restore_added (objs, values.key, values.item.path, 1, values.item.obj)
 				end
 				additions.forth
@@ -65,13 +65,13 @@ feature -- Managing Conditionals Branches
 				across
 					deletions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
+					restore_deleted (root.locals, root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
 				end
 				deletions.forth
 			end
 		end
 
-	restore_added (current_object: ALIAS_OBJECT; current_routine: ALIAS_ROUTINE; name_entity, feat_name: STRING; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; index: INTEGER; new_object: TWO_WAY_LIST [ALIAS_OBJECT])
+	restore_added (root_local_objects: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]; current_object: ALIAS_OBJECT; current_routine: ALIAS_ROUTINE; name_entity, feat_name: STRING; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; index: INTEGER; new_object: TWO_WAY_LIST [ALIAS_OBJECT])
 			-- deletes in `current_object'.`path' the added object: `new_object'
 			-- This command is used to restore the state of the graph on exit of conditional branch
 		local
@@ -189,6 +189,8 @@ feature -- Managing Conditionals Branches
 							print ("%N<====%N")
 						end
 						c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (paths.item))
+					elseif index = 1 and root_local_objects.has (create {ALIAS_KEY}.make (paths.item)) then
+						c_objs := root_local_objects.at (create {ALIAS_KEY}.make (paths.item))
 					end
 
 
@@ -219,7 +221,7 @@ feature -- Managing Conditionals Branches
 					across
 						c_objs as objs
 					loop
-						restore_added (objs.item, current_routine, name_entity, feat_name, path, index + 1, new_object)
+						restore_added (root_local_objects, objs.item, current_routine, name_entity, feat_name, path, index + 1, new_object)
 					end
 				end
 			end
@@ -248,7 +250,7 @@ feature -- Managing Conditionals Branches
 			across
 				deletions.at (n_conditional.last.index_del) as values
 			loop
-				restore_added (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
+				restore_added (root.locals, root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
 			end
 				-- delete the info in deletions and in n_conditional
 			from
@@ -271,7 +273,7 @@ feature -- Managing Conditionals Branches
 				across
 					additions.item as values
 				loop
-					restore_deleted (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
+					restore_deleted (root.locals, root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
 				end
 				additions.forth
 			end

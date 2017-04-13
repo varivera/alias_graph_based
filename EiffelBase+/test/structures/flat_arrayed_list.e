@@ -35,6 +35,17 @@ create
 	make,
 	make_filled
 
+feature -- Test
+	tt
+		local
+			l_area: like area_v2
+		do
+			l_area := area_v2
+			if True then
+				area_v2 := l_area
+			end
+		end
+
 feature -- Initialization
 
 	make (n: INTEGER_32)

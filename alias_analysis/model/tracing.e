@@ -2,7 +2,7 @@ class
 	TRACING
 
 feature
-	tracing: BOOLEAN = false
+	tracing: BOOLEAN = true
 		-- should it print?
 
 ;note

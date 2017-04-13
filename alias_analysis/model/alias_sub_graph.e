@@ -49,6 +49,11 @@ feature -- Updating
 			tup: TUPLE [name, abs_name, feat_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], STRING_8]]]]
 			obj: TWO_WAY_LIST [ALIAS_OBJECT]
 		do
+			if tracing then
+				io.new_line
+				print ("target_path_locals: ")
+				print (target_path_locals.count)
+			end
 			stop2 (0)
 			create tup
 			tup.feat_name := routine_name
@@ -695,7 +700,7 @@ feature -- Managing merging nodes (for loops and recursion)
 					across
 						deletions.item as values
 					loop
-						restore_deleted (root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
+						restore_deleted (root.locals, root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
 					end
 					deletions.forth
 				end
@@ -704,7 +709,7 @@ feature -- Managing merging nodes (for loops and recursion)
 			end
 		end
 
-	restore_deleted (current_object: ALIAS_OBJECT; current_routine: ALIAS_ROUTINE; name_entity, feat_name: STRING; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; index: INTEGER; old_object: TWO_WAY_LIST [ALIAS_OBJECT])
+	restore_deleted (root_local_objects: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]; current_object: ALIAS_OBJECT; current_routine: ALIAS_ROUTINE; name_entity, feat_name: STRING; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]; index: INTEGER; old_object: TWO_WAY_LIST [ALIAS_OBJECT])
 			-- adds in `current_object'.`path' the deleted object: `old_object'
 			-- This command is used to restore the state of the graph on exit of the structure
 		local
@@ -787,13 +792,15 @@ feature -- Managing merging nodes (for loops and recursion)
 					end
 					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
 						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))
-					elseif current_routine.locals.has_key (create {ALIAS_KEY}.make (paths.item)) then
+					elseif current_routine.locals.has (create {ALIAS_KEY}.make (paths.item)) then
 						c_objs := current_routine.locals [create {ALIAS_KEY}.make (paths.item)]
+					elseif index = 1 and root_local_objects.has (create {ALIAS_KEY}.make (paths.item)) then
+						c_objs := root_local_objects.at (create {ALIAS_KEY}.make (paths.item))
 					end
 					across
 						c_objs as objs
 					loop
-						restore_deleted (objs.item, current_routine, name_entity, feat_name, path, index + 1, old_object)
+						restore_deleted (root_local_objects, objs.item, current_routine, name_entity, feat_name, path, index + 1, old_object)
 					end
 				end
 			end
