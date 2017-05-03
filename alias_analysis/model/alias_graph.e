@@ -721,7 +721,10 @@ feature -- Managing Recursion
 	rec_last_locals: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]
 			-- points to the last locals in a previous recursive call
 
-	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]]
+	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
+				obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+				path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+				], ALIAS_KEY]]
 			-- additions and deletions of the previous recursive calls.
 			-- TODO: To improve
 
@@ -739,7 +742,10 @@ feature -- Managing Recursion
 			stack_top.alias_pos_rec.finalising_recursive_call (stack.first, stack_top, pre_add, pre_del)
 		end
 
-	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING; obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]], ALIAS_KEY]
+	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
+			obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+			path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+			], ALIAS_KEY]
 			-- returns the entities to be added to deletion after a conditional
 		do
 			Result := alias_cond.inter_deletion

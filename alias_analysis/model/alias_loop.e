@@ -185,7 +185,14 @@ feature {NONE} -- Helpers
 					across
 						deletions.item as values
 					loop
-						restore_deleted (root.locals, root.current_object, current_routine, values.key.name, current_routine.routine.e_feature.name_32+"_", values.item.path, 1, values.item.obj)
+						restore_deleted (
+							root.current_object,
+							current_routine,
+							values.key.name,
+							current_routine.routine.e_feature.name_32+"_",
+							values.item.path,
+							values.item.path_locals,
+							1, values.item.obj)
 						if attached cond_add as conditional then
 							across
 								values.item.obj as to_add
