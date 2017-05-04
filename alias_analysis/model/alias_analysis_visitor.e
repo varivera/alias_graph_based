@@ -567,16 +567,14 @@ feature {NONE} -- utilities
 							stop (129)
 								-- The name of the entity should be changed. It is being carried out by the stack_top routine
 							if alias_graph.stack_top.map_funct.has_key (create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)) then
-								if attached a_target as target and then attached target.entity as entity then
-									across
-										entity as ent
-									loop
-										if tracing then
-											io.new_line
-											print (ent.item)
-										end
-										aliasses.item.add_entity (ent.item)
+								across
+									l_target.entity as ent
+								loop
+									if tracing then
+										io.new_line
+										print (ent.item)
 									end
+									aliasses.item.add_entity (ent.item)
 								end
 								aliasses.item.add_entity (alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)])
 							else
@@ -589,16 +587,14 @@ feature {NONE} -- utilities
 								print (l_target.variable_name)
 								io.new_line
 							end
-							if attached a_target as target and then attached target.entity as entity then
-								across
-									entity as ent
-								loop
-									if tracing then
-										io.new_line
-										print (ent.item)
-									end
-									aliasses.item.add_entity (ent.item)
+							across
+								l_target.entity as ent
+							loop
+								if tracing then
+									io.new_line
+									print (ent.item)
 								end
+								aliasses.item.add_entity (ent.item)
 							end
 							entities_caller.force (l_target.variable_name)
 							aliasses.item.add_entity (entities_caller)

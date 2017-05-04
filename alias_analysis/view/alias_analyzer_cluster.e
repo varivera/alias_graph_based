@@ -71,6 +71,9 @@ feature {NONE}
 						-- TODO
 
 						-- TUPLES / agents: not supported yet
+					and (class_.name ~ "V_HASH_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "search"))
+
+
 					and (class_.name ~ "FLAT_ARRAY" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "do_if_with_index"))
 					and (class_.name ~ "FLAT_ARRAY" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "do_all_with_index"))
 
