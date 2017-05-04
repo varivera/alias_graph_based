@@ -68,15 +68,37 @@ feature {ANY}
 
 	type: TYPE_A
 
-	entity: TWO_WAY_LIST [STRING] assign set_entity
-			-- entity that called the Object
+	entity: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]
+			-- entity that called the Object represented by this ALIAS_OBJECT
+			-- It is a list of list to represent remote entites, e.g. a.b.c, where 'a' and 'b' are entities
 feature {ANY}
 
-	set_entity (name: TWO_WAY_LIST [STRING])
+	add_entity (name: TWO_WAY_LIST [STRING])
+		require
+			entity /= Void
+			attached name as n and then not name.is_empty
 		do
-			entity := name
+			entity.force (name)
 		end
-		
+
+	set_entity_error
+		require
+			entity /= Void
+		local
+			name: TWO_WAY_LIST [STRING]
+		do
+			create name.make
+			name.force ("ERROR")
+			entity.force (name)
+		end
+
+	entity_wipe_out
+		require
+			entity /= Void
+		do
+			entity.wipe_out
+		end
+
 	out: STRING_8
 		do
 			if attached {CL_TYPE_A} type then

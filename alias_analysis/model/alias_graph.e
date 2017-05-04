@@ -39,7 +39,7 @@ feature
 		end
 
 	stack_push (a_current_object: ALIAS_OBJECT; a_routine: PROCEDURE_I;
-				ent: TWO_WAY_LIST [STRING];
+				ent: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
 				ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]; qualified_call: BOOLEAN)
 			-- adds a context `a_routine' to the ALIAS_GRAPH having a ref to `a_current_object'
 			--  routine `a_routine' was called from entity `ent' in `qualified_call'
@@ -55,7 +55,30 @@ feature
 				create l_local_ent.make
 			end
 			if qualified_call then
-				l_ent.extend (ent)
+				from
+					--ent.finish
+					ent.start
+				until
+					--ent.before
+					ent.after
+				loop
+					l_ent.extend (ent.item)
+					--ent.back
+					ent.forth
+					--if ent.before then
+					if not ent.after then
+						l_local_ent.extend (create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make)
+					end
+				end
+
+				if tracing then
+					io.new_line
+					print (l_ent.count)
+					io.new_line
+					print (l_local_ent.count)
+				end
+
+				--l_ent.extend (ent)
 				l_local_ent.extend (ent_local)
 			end
 			stack.extend (create {ALIAS_ROUTINE}.make (

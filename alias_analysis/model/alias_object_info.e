@@ -31,6 +31,7 @@ feature {NONE}
 			end
 			variable_name := a_variable_name
 			alias_object := a_variable_map [create {ALIAS_KEY}.make (a_variable_name)]
+			create entity.make
 		ensure
 			context_routine = a_context_routine
 			variable_map = a_variable_map
@@ -51,6 +52,7 @@ feature {NONE}
 				l_obj.force (objects.item)
 			end
 			alias_object := l_obj
+			create entity.make
 		ensure
 				--	alias_object.has (a_alias_object)
 		end
@@ -71,6 +73,10 @@ feature
 
 	function: BOOLEAN
 			-- was this ALIAS_OBJECT_INFO created by analysing a function?
+
+	entity: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]
+			-- entity that called the Object represented by this ALIAS_OBJECT
+			-- It is a list of list to represent remote entites, e.g. a.b.c, where 'a' and 'b' are entities
 
 feature {ANY}
 
@@ -200,6 +206,32 @@ feature {ANY}
 			loop
 				Result.force (vals.item)
 			end
+		end
+
+	add_entity (name: TWO_WAY_LIST [STRING])
+		require
+			entity /= Void
+			attached name as n and then not name.is_empty
+		do
+			entity.force (name)
+		end
+
+	set_entity_error
+		require
+			entity /= Void
+		local
+			name: TWO_WAY_LIST [STRING]
+		do
+			create name.make
+			name.force ("ERROR")
+			entity.force (name)
+		end
+
+	entity_wipe_out
+		require
+			entity /= Void
+		do
+			entity.wipe_out
 		end
 
 feature {NONE}
