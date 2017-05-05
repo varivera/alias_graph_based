@@ -220,14 +220,16 @@ feature {NONE}
 				across
 					l_target.alias_object as aliases
 				loop
-					if attached a_node.call then
-						get_alias_info (aliases.item, a_node.call).do_nothing
-					else
-							-- call default_create procedure
-						if attached System.eiffel_universe.classes_with_name (l_target.alias_object.first.type.name) as l_classes and then l_classes.count = 1 and then attached {PROCEDURE_I} System.class_of_id (l_classes.first.compiled_class.class_id).feature_of_rout_id (System.class_of_id (l_classes.first.compiled_class.class_id).creation_feature.e_feature.rout_id_set.first) as l_r then
-							call_routine (aliases.item, l_r, Void).do_nothing
+					if not l_target.alias_object.first.is_string then
+						if attached a_node.call then
+							get_alias_info (aliases.item, a_node.call).do_nothing
+						else
+								-- call default_create procedure
+							if attached System.eiffel_universe.classes_with_name (l_target.alias_object.first.type.name) as l_classes and then l_classes.count = 1 and then attached {PROCEDURE_I} System.class_of_id (l_classes.first.compiled_class.class_id).feature_of_rout_id (System.class_of_id (l_classes.first.compiled_class.class_id).creation_feature.e_feature.rout_id_set.first) as l_r then
+								call_routine (aliases.item, l_r, Void).do_nothing
+							end
+							stop (200)
 						end
-						stop (200)
 					end
 				end
 
@@ -469,18 +471,17 @@ feature {NONE} -- utilities
 								stop (125)
 									-- The name of the entity should be changed. It is being carried out by the stack_top routine
 								if alias_graph.stack_top.map_funct.has_key (create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)) then
-									if attached a_target as target and then attached target.entity as entity then
-										across
-											entity as ent
-										loop
-											if tracing then
-												io.new_line
-												print (ent.item)
-											end
-											aliasses.item.add_entity (ent.item)
+									across
+										l_target.entity as ent
+									loop
+										if tracing then
+											io.new_line
+											print (ent.item)
 										end
+										aliasses.item.add_entity (ent.item)
 									end
-									aliasses.item.add_entity (alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)])
+									entities_caller := alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)]
+									aliasses.item.add_entity (entities_caller)
 								else
 									aliasses.item.set_entity_error
 								end
@@ -491,16 +492,21 @@ feature {NONE} -- utilities
 									io.new_line
 								end
 
-								if attached a_target as target and then attached target.entity as entity then
-									across
-										entity as ent
-									loop
+								across
+									l_target.entity as ent
+								loop
 										if tracing then
-											io.new_line
-											print (ent.item)
+										io.new_line
+										print ("[")
+										across
+											ent.item as e
+										loop
+											print (e.item)
+											print (", ")
 										end
-										aliasses.item.add_entity (ent.item)
+										print ("]")
 									end
+									aliasses.item.add_entity (ent.item)
 								end
 
 								entities_caller.force (l_target.variable_name)
@@ -517,7 +523,14 @@ feature {NONE} -- utilities
 										aliasses.item.entity as tt
 									loop
 										io.new_line
-										print (tt.item)
+										print ("[")
+										across
+											tt.item as e
+										loop
+											print (e.item)
+											print (", ")
+										end
+										print ("]")
 									end
 								end
 
@@ -566,9 +579,11 @@ feature {NONE} -- utilities
 						if l_target.function then
 							stop (129)
 								-- The name of the entity should be changed. It is being carried out by the stack_top routine
-							if alias_graph.stack_top.map_funct.has_key (create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)) then
+							if alias_graph.stack_top.map_funct.has_key (create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32))
+								and attached l_target as l
+							then
 								across
-									l_target.entity as ent
+									l.entity as ent
 								loop
 									if tracing then
 										io.new_line
@@ -587,15 +602,18 @@ feature {NONE} -- utilities
 								print (l_target.variable_name)
 								io.new_line
 							end
-							across
-								l_target.entity as ent
-							loop
-								if tracing then
-									io.new_line
-									print (ent.item)
+							if attached l_target as l then
+								across
+									l_target.entity as ent
+								loop
+									if tracing then
+										io.new_line
+										print (ent.item)
+									end
+									aliasses.item.add_entity (ent.item)
 								end
-								aliasses.item.add_entity (ent.item)
 							end
+
 							entities_caller.force (l_target.variable_name)
 							aliasses.item.add_entity (entities_caller)
 						end
@@ -780,6 +798,7 @@ feature {NONE} -- utilities
 			alias_a, alias_b: STRING
 			objs: ALIAS_OBJECT
 			ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
+			tmp_entity: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]
 		do
 				-- before making the call: check if recursion, if so, check for Fix Point
 			alias_graph.check_recursive_fix_point (a_routine.feature_name_32)
@@ -792,7 +811,25 @@ feature {NONE} -- utilities
 					across
 						a_params as c
 					loop
+						if attached a_target as target then
+							create tmp_entity.make
+							across
+								target.entity as ent
+							loop
+								tmp_entity.force (ent.item)
+							end
+							target.entity_wipe_out
+						end
 						l_params.extend (get_alias_info (Void, c.item))
+
+						if attached a_target as target then
+							target.entity_wipe_out
+							across
+								tmp_entity as ent
+							loop
+								target.add_entity (ent.item)
+							end
+						end
 					end
 				end
 				if a_target /= Void then

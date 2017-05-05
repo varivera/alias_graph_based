@@ -253,7 +253,16 @@ feature -- Updating
 							end
 						end
 					end
-					stack.at (stack.count - 1).map_funct.force (atts_mapped, create {ALIAS_KEY}.make (stack_top.routine.e_feature.name_32))
+					if not atts_mapped.is_empty then
+						stack.at (stack.count - 1).map_funct.force (atts_mapped, create {ALIAS_KEY}.make (stack_top.routine.e_feature.name_32))
+					else -- treat the function (i.e. add it) as a local in stack.at (stack.count - 1)
+						stack.at (stack.count - 1).locals.force (stack_top.locals.at (create {ALIAS_KEY}.make ("Result")),
+							create {ALIAS_KEY}.make (stack_top.routine.e_feature.name_32))
+						create atts_mapped.make
+						atts_mapped.force (stack_top.routine.e_feature.name_32)
+						stack.at (stack.count - 1).map_funct.force (atts_mapped, create {ALIAS_KEY}.make (stack_top.routine.e_feature.name_32))
+					end
+
 				end
 				deleting_local_vars (stack_top.routine.e_feature.name_32, stack_top.locals.current_keys)
 			end
