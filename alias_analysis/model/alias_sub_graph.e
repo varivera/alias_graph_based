@@ -1093,6 +1093,98 @@ feature --{NONE} -- To Delete
 			end
 		end
 
+
+	printing_va (v: like additions)
+			-- va
+			--		(1): additions and deletions
+			--      (2): deletions
+			--		(3): additions
+			--		(4): nothing
+		local
+			ttt: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
+			obj: TWO_WAY_LIST [ALIAS_OBJECT];
+			path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
+			path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+			], ALIAS_KEY]]
+			va: INTEGER
+		do
+			va := 1
+			if tracing then
+				if va = 4 then
+				else
+					if va = 1 or va = 3 then
+						print ("%N%NAditions%N%N")
+						ttt := v
+					end
+					across
+						ttt as added
+					loop
+						print ("--%N")
+						across
+							added.item as pair_add
+						loop
+							print (pair_add.key)
+							print (": ")
+							print (pair_add.item.name)
+							print (" -[")
+							across
+								pair_add.item.obj as obj_add
+							loop
+								if attached obj_add.item as oo then
+									print (oo.out2)
+								else
+									print ("Void")
+								end
+								if obj_add.after then
+									print (", ")
+								end
+							end
+							print ("] path: [")
+							across
+								pair_add.item.path as path_add
+							loop
+								print ("[")
+								across
+									path_add.item as p
+								loop
+									print (p.item)
+									if p.after then
+										print (",")
+									end
+								end
+								print ("]")
+								if path_add.after then
+									print (", ")
+								end
+							end
+							print ("] path_locals: [")
+							across
+								pair_add.item.path_locals as tpl
+							loop
+								print ("keys (")
+								across
+									tpl.item as p
+								loop
+									across
+										p.item.current_keys as k
+									loop
+										print (k.item)
+										print (",")
+									end
+								end
+								print ("), ")
+							end
+							print ("] abs_name: ")
+							print (pair_add.item.abs_name)
+							print (" feature_name: ")
+							print (pair_add.item.feat_name)
+							print ("%N")
+						end
+					end
+				end
+			end
+		end
+
 feature {NONE}
 
 	n_fixpoint: INTEGER = 2

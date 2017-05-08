@@ -197,6 +197,27 @@ feature {NONE} -- Helpers
 							across
 								values.item.obj as to_add
 							loop
+								if tracing then
+									print ("%N%N%N-DELETIONS------------------------------%N%N%N")
+									printing_vars (1)
+									print ("%N%N%N-CONDITIONAL-------------------------------%N%N%N")
+									printing_va (conditional)
+									print ("%N%N%NDone-------------------------------%N%N%N")
+									print ("count: ")
+									print (conditional.count)
+									print ("%N%N%NDone-------------------------------%N%N%N")
+									print (conditional.last)
+									print ("%N%N%NDone-------------------------------%N%N%N")
+									print (values.key)
+									print ("%N%N%NDone-------------------------------%N%N%N")
+									print (conditional.last.at (values.key))
+									print ("%N%N%NDone-------------------------------%N%N%N")
+									print (conditional.last.at (values.key).obj)
+									print ("%N%N%NDone-------------------------------%N%N%N")
+									print (conditional.last.at (values.key).obj.has (to_add.item))
+									print ("%N%N%NDone-------------------------------%N%N%N")
+
+								end
 								if not conditional.last.at (values.key).obj.has (to_add.item) then
 									conditional.last.at (values.key).obj.force (to_add.item)
 								end

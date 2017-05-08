@@ -121,6 +121,7 @@ feature
 					obj_vars.force (l_obj, create {ALIAS_KEY}.make (const.item.name_32))
 				end
 			end
+
 			across
 				a_class.skeleton as att
 			loop
@@ -173,7 +174,7 @@ feature
 				if attached a_routine.e_feature.type as type then
 					create l_obj.make
 					l_obj.force (create {ALIAS_OBJECT}.make (type))
-					stack_top.locals.force (l_obj, create {ALIAS_KEY}.make ("Result"))
+						stack_top.locals.force (l_obj, create {ALIAS_KEY}.make ("Result"))
 				else
 						-- TODO
 				end

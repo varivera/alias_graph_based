@@ -364,8 +364,13 @@ feature {NONE} -- utilities
 
 	show_graph
 			-- depicts the graph
+		local
+			output_file: PLAIN_TEXT_FILE
 		do
-			(create {EXECUTION_ENVIRONMENT}).launch ("echo %"" + alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null")
+			create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+			output_file.put_string  (alias_graph.to_graph)
+			output_file.close;
+--			(create {EXECUTION_ENVIRONMENT}).launch ("echo %"" + alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null")
 		end
 
 	get_alias_info (a_target: ALIAS_OBJECT; a_node: AST_EIFFEL): ALIAS_OBJECT_INFO
@@ -434,9 +439,9 @@ feature {NONE} -- utilities
 											create {EIFFEL_LIST [EXPR_AS]}.make (0)
 										end)
 				else
-					if attached a_target as target and then not attached {VOID_A} target.type then
+					if attached a_target as target and then attached target.type as type and then attached type.base_class as base then
 							-- check if there are attributes to be added
-						alias_graph.update_class_atts (target.type.base_class, target.attributes)
+						alias_graph.update_class_atts (base, target.attributes)
 					end
 						-- attribute
 					create Result.make_variable (alias_graph.stack_top.routine, (if a_target /= Void then a_target else alias_graph.stack_top.current_object end).attributes, l_node.access_name_8)
