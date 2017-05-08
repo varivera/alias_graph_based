@@ -204,6 +204,7 @@ feature {NONE}
 		local
 			l_obj: TWO_WAY_LIST [ALIAS_OBJECT]
 			old_object: ALIAS_OBJECT_INFO
+			entities_caller: TWO_WAY_LIST [STRING]
 		do
 			if attached get_alias_info (Void, a_node.target) as l_target and then l_target.is_variable then
 					--create old_object.make
@@ -221,6 +222,11 @@ feature {NONE}
 					l_target.alias_object as aliases
 				loop
 					if not l_target.alias_object.first.is_string then
+
+						create entities_caller.make
+						entities_caller.force (l_target.variable_name)
+						aliases.item.add_entity (entities_caller)
+
 						if attached a_node.call then
 							get_alias_info (aliases.item, a_node.call).do_nothing
 						else
@@ -230,6 +236,7 @@ feature {NONE}
 							end
 							stop (200)
 						end
+						aliases.item.entity_wipe_out
 					end
 				end
 
@@ -471,14 +478,16 @@ feature {NONE} -- utilities
 								stop (125)
 									-- The name of the entity should be changed. It is being carried out by the stack_top routine
 								if alias_graph.stack_top.map_funct.has_key (create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)) then
-									across
-										l_target.entity as ent
-									loop
-										if tracing then
-											io.new_line
-											print (ent.item)
+									if attached a_target as target  then
+										across
+											target.entity as ent
+										loop
+											if tracing then
+												io.new_line
+												print (ent.item)
+											end
+											aliasses.item.add_entity (ent.item)
 										end
-										aliasses.item.add_entity (ent.item)
 									end
 									entities_caller := alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)]
 									aliasses.item.add_entity (entities_caller)
@@ -492,21 +501,23 @@ feature {NONE} -- utilities
 									io.new_line
 								end
 
-								across
-									l_target.entity as ent
-								loop
-										if tracing then
-										io.new_line
-										print ("[")
-										across
-											ent.item as e
-										loop
-											print (e.item)
-											print (", ")
+								if attached a_target as target then
+									across
+										target.entity as ent
+									loop
+											if tracing then
+											io.new_line
+											print ("[")
+											across
+												ent.item as e
+											loop
+												print (e.item)
+												print (", ")
+											end
+											print ("]")
 										end
-										print ("]")
+										aliasses.item.add_entity (ent.item)
 									end
-									aliasses.item.add_entity (ent.item)
 								end
 
 								entities_caller.force (l_target.variable_name)
