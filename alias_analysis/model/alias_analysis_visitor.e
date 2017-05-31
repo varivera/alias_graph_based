@@ -952,6 +952,24 @@ feature {NONE} -- utilities
 							alias_by_external (alias_a, alias_b)
 						end
 					end
+				elseif attached get_alias_pairs (a_routine) as aliases and then aliases.count > 0 then
+						-- the feature declares external aliases
+					if (aliases.count \\ 2) = 0 then
+						from
+							aliases.start
+						until
+							aliases.after
+						loop
+							alias_a := aliases.item
+							aliases.forth
+							alias_b := aliases.item
+							aliases.forth
+							if tracing then
+								print_aliases (alias_a, alias_b)
+							end
+							alias_by_external (alias_a, alias_b)
+						end
+					end
 				else
 					a_routine.body.process (Current)
 				end

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<system xmlns="http://www.eiffel.com/developers/xml/configuration-1-15-0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.eiffel.com/developers/xml/configuration-1-15-0 http://www.eiffel.com/developers/xml/configuration-1-15-0.xsd" name="base2" uuid="DE0E6D7C-E956-44D1-A1A8-DD05B18B8084" library_target="base2">
+	<target name="base2">
+		<root all_classes="true"/>
+		<option warning="true" full_class_checking="true" is_obsolete_routine_type="true" void_safety="all">
+		</option>
+		<library name="base" location="$ISE_LIBRARY/library/base/base-safe.ecf"/>
+		<cluster name="mml" location="./mml/">
+			<file_rule>
+				<exclude>.svn</exclude>
+			</file_rule>
+			<cluster name="tests_10" location="/home/varivera/Desktop/exampleOct27/mml/tests_10/"/>
+			<cluster name="tests_structures" location="/home/varivera/Desktop/exampleOct27/mml/tests_structures/"/>
+		</cluster>
+		<cluster name="structures" location="./structures/">
+			<file_rule>
+				<exclude>.svn</exclude>
+			</file_rule>
+			<cluster name="utility" location="/home/varivera/Desktop/exampleOct27/structures/utility/"/>
+			<cluster name="cell" location="/home/varivera/Desktop/exampleOct27/structures/cell/"/>
+			<cluster name="stream" location="/home/varivera/Desktop/exampleOct27/structures/stream/"/>
+			<cluster name="container" location="/home/varivera/Desktop/exampleOct27/structures/container/"/>
+			<cluster name="array" location="/home/varivera/Desktop/exampleOct27/structures/array/"/>
+			<cluster name="iterator" location="/home/varivera/Desktop/exampleOct27/structures/iterator/">
+				<cluster name="implementation" location="/home/varivera/Desktop/exampleOct27/structures/iterator/implementation/"/>
+				<cluster name="list" location="/home/varivera/Desktop/exampleOct27/structures/iterator/list/"/>
+				<cluster name="sequence" location="/home/varivera/Desktop/exampleOct27/structures/iterator/sequence/"/>
+				<cluster name="set" location="/home/varivera/Desktop/exampleOct27/structures/iterator/set/"/>
+				<cluster name="table" location="/home/varivera/Desktop/exampleOct27/structures/iterator/table/"/>
+				<cluster name="tree" location="/home/varivera/Desktop/exampleOct27/structures/iterator/tree/"/>
+			</cluster>
+			<cluster name="list_2" location="/home/varivera/Desktop/exampleOct27/structures/list_2/"/>
+			<cluster name="set_2" location="/home/varivera/Desktop/exampleOct27/structures/set_2/"/>
+			<cluster name="tree_2" location="/home/varivera/Desktop/exampleOct27/structures/tree_2/"/>
+			<cluster name="table_2" location="/home/varivera/Desktop/exampleOct27/structures/table_2/"/>
+			<cluster name="dispenser" location="/home/varivera/Desktop/exampleOct27/structures/dispenser/"/>
+		</cluster>
+	</target>
+</system>

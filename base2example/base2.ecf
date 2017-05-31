@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<system xmlns="http://www.eiffel.com/developers/xml/configuration-1-15-0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.eiffel.com/developers/xml/configuration-1-15-0 http://www.eiffel.com/developers/xml/configuration-1-15-0.xsd" name="base2" uuid="DE0E6D7C-E956-44D1-A1A8-DD05B18B8084" library_target="base2">
+	<target name="base2">
+		<root all_classes="true"/>
+		<option warning="true" full_class_checking="true" is_obsolete_routine_type="true" void_safety="transitional">
+		</option>
+		<library name="base" location="$ISE_LIBRARY\library\base\base-safe.ecf"/>
+		<cluster name="mml" location=".\mml\">
+			<file_rule>
+				<exclude>.svn</exclude>
+			</file_rule>
+			<cluster name="tests_10" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\tests_10\"/>
+			<cluster name="tests_structures" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\tests_structures\"/>
+			<cluster name="nov_11_16" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\nov_11_16\"/>
+			<cluster name="jan_19_17" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\jan_19_17\"/>
+			<cluster name="recursion_feb_17" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\recursion_feb_17\"/>
+			<cluster name="fixing_problemsfeb" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\fixing_problemsfeb\"/>
+			<cluster name="march_fix" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\march_fix\"/>
+			<cluster name="test_loop" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\test_loop\"/>
+			<cluster name="march_second_part" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\march_second_part\"/>
+			<cluster name="april" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\april\"/>
+			<cluster name="may" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\may\"/>
+			<cluster name="june" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\mml\june\"/>
+		</cluster>
+		<cluster name="structures" location=".\structures\">
+			<file_rule>
+				<exclude>.svn</exclude>
+			</file_rule>
+			<cluster name="utility" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\utility\"/>
+			<cluster name="cell" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\cell\"/>
+			<cluster name="stream" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\stream\"/>
+			<cluster name="container" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\container\"/>
+			<cluster name="array" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\array\">
+				<cluster name="march" location="c:\users\v.rivera\desktop\todelete\exampleoct27\structures\array\march\"/>
+			</cluster>
+			<cluster name="iterator" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\iterator\">
+				<cluster name="implementation" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\iterator\implementation\"/>
+				<cluster name="list" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\iterator\list\"/>
+				<cluster name="sequence" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\iterator\sequence\"/>
+				<cluster name="set" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\iterator\set\"/>
+				<cluster name="table" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\iterator\table\"/>
+				<cluster name="tree" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\iterator\tree\"/>
+			</cluster>
+			<cluster name="list_2" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\list_2\"/>
+			<cluster name="set_2" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\set_2\"/>
+			<cluster name="tree_2" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\tree_2\"/>
+			<cluster name="table_2" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\table_2\"/>
+			<cluster name="dispenser" location="C:\Users\v.rivera\Desktop\toDelete\exampleOct27\structures\dispenser\"/>
+		</cluster>
+	</target>
+</system>

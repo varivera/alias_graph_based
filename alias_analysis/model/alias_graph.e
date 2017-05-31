@@ -215,7 +215,7 @@ feature
 			create Result.make_empty
 			Result.append ("digraph g {%N")
 			Result.append ("%Tnode [shape=box]%N")
-			print_nodes (stack.last, create {CELL [NATURAL_32]}.put (0), Result)
+			print_nodes (stack.last, 0, create {CELL [NATURAL_32]}.put (0), Result)
 			print_edges (stack.last, Result, cur_change)
 			Result.append ("}%N")
 		end
@@ -420,19 +420,35 @@ feature {NONE} -- Computing
 			end
 		end
 
-	print_nodes (a_cur_node: ALIAS_VISITABLE; a_id: CELL [NATURAL_32]; a_output: STRING_8)
+	print_nodes (a_cur_node: ALIAS_VISITABLE;
+	root_n: INTEGER;
+	a_id: CELL [NATURAL_32]; a_output: STRING_8)
 		require
 			a_cur_node /= Void
 			a_id /= Void
 			a_output /= Void
+--			(
+--				root_n = 0 -- init one
+--			or
+--				root_n = 1 -- root + locals
+--			or
+--				root_n = 2 -- normal
+--			)
 		do
 			if not a_cur_node.visited then
 				a_cur_node.visited := True
 				a_id.put (a_id.item + 1)
 				a_cur_node.add_visiting_data ("b" + a_id.item.out)
-				a_output.append ("%T" + a_cur_node.visiting_data.last + "[label=<" + a_cur_node.out + ">]%N")
+				if root_n = 0 then
+					a_output.append ("%T" + a_cur_node.visiting_data.last + "[color=purple label=<" + a_cur_node.out + ">]%N")
+				elseif root_n = 1 then
+					a_output.append ("%T" + a_cur_node.visiting_data.last + "[color=blue label=<" + a_cur_node.out + ">]%N")
+				elseif root_n = 2 then
+					a_output.append ("%T" + a_cur_node.visiting_data.last + "[label=<" + a_cur_node.out + ">]%N")
+				end
 				if attached {ALIAS_ROUTINE} a_cur_node as l_ar then
-					print_nodes (l_ar.current_object, a_id, a_output)
+					--print ("%N"+a_cur_node.out+"%N")
+					print_nodes (l_ar.current_object, 1, a_id, a_output)
 				end
 				across
 					a_cur_node.variables as c
@@ -440,7 +456,12 @@ feature {NONE} -- Computing
 					across
 						c.item as vars
 					loop
-						print_nodes (vars.item, a_id, a_output)
+						if attached {ALIAS_ROUTINE} a_cur_node as l_ar then
+							print_nodes (vars.item, 1, a_id, a_output)
+						else
+							print_nodes (vars.item, 2, a_id, a_output)
+						end
+						--print_nodes (vars.item, 2, a_id, a_output)
 					end
 				end
 			end
