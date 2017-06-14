@@ -180,7 +180,7 @@ feature {NONE}
 				loop
 					create entity_caller.make
 					entity_caller.force (l_foo.variable_name)
-					aliases.item.add_entity (entity_caller)
+					aliases.item.add_entity (entity_caller, alias_graph.stack_top.locals)
 					call_routine_with_arg (aliases.item, l_set_bar2, a_node.source).do_nothing
 				end
 			elseif
@@ -192,7 +192,7 @@ feature {NONE}
 				loop
 					create entity_caller.make
 					entity_caller.force (l_foo.variable_name)
-					aliases.item.add_entity (entity_caller)
+					aliases.item.add_entity (entity_caller, alias_graph.stack_top.locals)
 					call_routine_with_arg (aliases.item, l_set_bar2, a_node.source).do_nothing
 				end
 			else
@@ -225,7 +225,7 @@ feature {NONE}
 
 						create entities_caller.make
 						entities_caller.force (l_target.variable_name)
-						aliases.item.add_entity (entities_caller)
+						aliases.item.add_entity (entities_caller, alias_graph.stack_top.locals)
 
 						if attached a_node.call then
 							get_alias_info (aliases.item, a_node.call).do_nothing
@@ -487,17 +487,19 @@ feature {NONE} -- utilities
 								if alias_graph.stack_top.map_funct.has_key (create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)) then
 									if attached a_target as target  then
 										across
-											target.entity as ent
+											--target.entity as ent
+											1 |..| target.entity.count as i
 										loop
 											if tracing then
 												io.new_line
-												print (ent.item)
+												print (target.entity [i.item])
 											end
-											aliasses.item.add_entity (ent.item)
+
+											aliasses.item.add_entity (target.entity [i.item], target.entity_locals [i.item])
 										end
 									end
 									entities_caller := alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)]
-									aliasses.item.add_entity (entities_caller)
+									aliasses.item.add_entity (entities_caller, alias_graph.stack_top.locals)
 								else
 									aliasses.item.set_entity_error
 								end
@@ -510,20 +512,21 @@ feature {NONE} -- utilities
 
 								if attached a_target as target then
 									across
-										target.entity as ent
+										--target.entity as ent
+										1 |..| target.entity.count as i
 									loop
 											if tracing then
 											io.new_line
 											print ("[")
 											across
-												ent.item as e
+												target.entity [i.item] as e
 											loop
 												print (e.item)
 												print (", ")
 											end
 											print ("]")
 										end
-										aliasses.item.add_entity (ent.item)
+										aliasses.item.add_entity (target.entity [i.item], target.entity_locals [i.item])
 									end
 								end
 
@@ -535,7 +538,7 @@ feature {NONE} -- utilities
 									print (alias_graph.stack_top.locals.has (create {ALIAS_KEY}.make (l_target.variable_name)))
 								end
 
-								aliasses.item.add_entity (entities_caller)
+								aliasses.item.add_entity (entities_caller, alias_graph.stack_top.locals)
 								if tracing then
 									across
 										aliasses.item.entity as tt
@@ -556,7 +559,7 @@ feature {NONE} -- utilities
 							end
 							stop (906)
 							Result := get_alias_info (aliasses.item, l_node.message)
-							Result.add_entity (entities_caller)
+							Result.add_entity (entities_caller, alias_graph.stack_top.locals)
 
 							aliasses.item.entity_wipe_out
 						end
@@ -602,18 +605,19 @@ feature {NONE} -- utilities
 								and attached l_target as l
 							then
 								across
-									l.entity as ent
+									--l.entity as ent
+									1 |..| l.entity.count as i
 								loop
 									if tracing then
 										io.new_line
-										print (ent.item)
+										print (l.entity [i.item])
 									end
-									aliasses.item.add_entity (ent.item)
+									aliasses.item.add_entity (l.entity [i.item],  l.entity_locals [i.item])
 								end
-								aliasses.item.add_entity (alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)])
+								aliasses.item.add_entity (alias_graph.stack_top.map_funct [create {ALIAS_KEY}.make (l_target.context_routine.e_feature.name_32)],
+										alias_graph.stack_top.locals)
 							else
-								entities_caller.force ("ERROR")
-								aliasses.item.add_entity (entities_caller)
+								aliasses.item.set_entity_error
 							end
 						else
 							stop (131)
@@ -623,18 +627,19 @@ feature {NONE} -- utilities
 							end
 							if attached l_target as l then
 								across
-									l_target.entity as ent
+									--l_target.entity as ent
+									1 |..| l_target.entity.count as i
 								loop
 									if tracing then
 										io.new_line
-										print (ent.item)
+										print (l_target.entity [i.item])
 									end
-									aliasses.item.add_entity (ent.item)
+									aliasses.item.add_entity (l_target.entity [i.item], l_target.entity_locals [i.item])
 								end
 							end
 
 							entities_caller.force (l_target.variable_name)
-							aliasses.item.add_entity (entities_caller)
+							aliasses.item.add_entity (entities_caller, alias_graph.stack_top.locals)
 						end
 
 							-- no needResult := get_alias_info (aliasses.item, l_node.message)
@@ -836,10 +841,16 @@ feature {NONE} -- utilities
 					loop
 						if attached a_target as target then
 							create tmp_entity.make
+							create ent_local.make
 							across
 								target.entity as ent
 							loop
 								tmp_entity.force (ent.item)
+							end
+							across
+								target.entity_locals as l
+							loop
+								ent_local.force (l.item)
 							end
 							target.entity_wipe_out
 						end
@@ -848,22 +859,24 @@ feature {NONE} -- utilities
 						if attached a_target as target then
 							target.entity_wipe_out
 							across
-								tmp_entity as ent
+								1 |..| tmp_entity.count as i
 							loop
-								target.add_entity (ent.item)
+								target.add_entity (tmp_entity.at (i.item), ent_local.at (i.item))
 							end
 						end
 					end
 				end
-				if a_target /= Void then
-						-- qualified call
-					create ent_local.make
-					ent_local.force (alias_graph.stack_top.locals)
-				end
+--				if a_target /= Void then
+--						-- qualified call
+--					create ent_local.make
+--					ent_local.force (alias_graph.stack_top.locals)
+--				end
 				alias_graph.stack_push (
 					if a_target /= Void then a_target else alias_graph.stack_top.current_object end,
 					a_routine,
-					if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end, ent_local, a_target /= Void)
+					if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
+					if a_target /= Void then a_target.entity_locals else create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make end,
+					a_target /= Void)
 				across
 					l_params as c
 				loop

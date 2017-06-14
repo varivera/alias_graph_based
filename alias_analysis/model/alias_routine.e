@@ -63,7 +63,8 @@ feature {ANY}
 			--				end
 			-- 'set_x' is being called from 'v' and 'w': [[previous], [v,w]]
 
-	caller_locals: TWO_WAY_LIST [TWO_WAY_LIST [like locals]]
+	--caller_locals: TWO_WAY_LIST [TWO_WAY_LIST [like locals]]
+	caller_locals: TWO_WAY_LIST [like locals]
 			-- holds the locals of the objects which called Current routine
 			-- on locals since attributes can be reached from the alias_graph
 

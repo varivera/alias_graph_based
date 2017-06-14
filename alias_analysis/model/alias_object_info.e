@@ -32,6 +32,7 @@ feature {NONE}
 			variable_name := a_variable_name
 			alias_object := a_variable_map [create {ALIAS_KEY}.make (a_variable_name)]
 			create entity.make
+			create entity_locals.make
 		ensure
 			context_routine = a_context_routine
 			variable_map = a_variable_map
@@ -53,6 +54,7 @@ feature {NONE}
 			end
 			alias_object := l_obj
 			create entity.make
+			create entity_locals.make
 		ensure
 				--	alias_object.has (a_alias_object)
 		end
@@ -74,9 +76,15 @@ feature
 	function: BOOLEAN
 			-- was this ALIAS_OBJECT_INFO created by analysing a function?
 
+	-- TODO: to avoid `entity' and `entity_locals' one could treat
+	--		variables as functions, so they will appear in the ALIAS_GRAPH as routines
+
 	entity: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]
 			-- entity that called the Object represented by this ALIAS_OBJECT
 			-- It is a list of list to represent remote entites, e.g. a.b.c, where 'a' and 'b' are entities
+
+	entity_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
+			-- contains the locals for each entity in `entity' (in case of need)
 
 feature {ANY}
 
@@ -208,30 +216,37 @@ feature {ANY}
 			end
 		end
 
-	add_entity (name: TWO_WAY_LIST [STRING])
+	add_entity (name: TWO_WAY_LIST [STRING]; l: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
+			-- adds the entity that calls the object and also
+			-- updates the locals of that object
 		require
-			entity /= Void
-			attached name as n and then not name.is_empty
+			name_no_void: attached name as n and then not n.is_empty
+			l_no_void: attached l as loc and then not loc.is_empty
 		do
 			entity.force (name)
+			entity_locals.force (l)
 		end
 
 	set_entity_error
-		require
-			entity /= Void
+			-- set `entity' and `entity_locals' to error for the implementer to check
+			-- where the error was introduced
 		local
 			name: TWO_WAY_LIST [STRING]
+			l: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]
 		do
 			create name.make
 			name.force ("ERROR")
 			entity.force (name)
+			create l.make (0)
+			l.force (create {TWO_WAY_LIST [ALIAS_OBJECT]}.make, create {ALIAS_KEY}.make ("Error"))
+			entity_locals.force (l)
 		end
 
 	entity_wipe_out
-		require
-			entity /= Void
+			-- wipes out both `entity' and its locals
 		do
 			entity.wipe_out
+			entity_locals.wipe_out
 		end
 
 feature {NONE}
@@ -348,6 +363,9 @@ invariant
 		--VIC: (context_routine = Void) = (variable_map = Void) = (variable_name = Void)
 		-- counter example: all of them are not Void, the assertion will give False
 	(context_routine = Void) = (variable_map = Void) and then (variable_map = Void) = (variable_name = Void) and then (context_routine = Void) = (variable_name = Void)
+	entity /= Void
+	entity_locals /= Void
+	entity.count = entity_locals.count
 
 note
 	copyright: "Copyright (c) 1984-2017, Eiffel Software"

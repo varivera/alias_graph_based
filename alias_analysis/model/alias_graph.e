@@ -66,9 +66,9 @@ feature
 					--ent.back
 					ent.forth
 					--if ent.before then
-					if not ent.after then
-						l_local_ent.extend (create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make)
-					end
+--					if not ent.after then
+--						l_local_ent.extend (create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make)
+--					end
 				end
 
 				if tracing then
@@ -80,6 +80,13 @@ feature
 
 				--l_ent.extend (ent)
 				l_local_ent.extend (ent_local)
+
+				if tracing then
+					io.new_line
+					print (l_ent.count)
+					io.new_line
+					print (l_local_ent.count)
+				end
 			end
 			stack.extend (create {ALIAS_ROUTINE}.make (
 						a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]}.make (16),
@@ -610,7 +617,8 @@ feature -- Managing Conditionals
 			if is_conditional_branch then
 				alias_cond.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
+					--if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make end,
 					stack_top.routine.e_feature.name_32 + "_",
 					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name)),
 					stack_top.locals.has (create {ALIAS_KEY}.make (source.variable_name))
@@ -619,7 +627,7 @@ feature -- Managing Conditionals
 			if is_loop_iter then
 				alias_loop.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make end,
 					stack_top.routine.e_feature.name_32 + "_",
 					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name)),
 					stack_top.locals.has (create {ALIAS_KEY}.make (source.variable_name))
@@ -629,7 +637,7 @@ feature -- Managing Conditionals
 			if is_dyn_bin then
 				alias_dyn.updating_A_D (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make end,
 					stack_top.routine.e_feature.name_32 + "_",
 					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name)),
 					stack_top.locals.has (create {ALIAS_KEY}.make (source.variable_name))
@@ -639,7 +647,7 @@ feature -- Managing Conditionals
 				-- in case of recursion
 			stack_top.alias_pos_rec.updating_a_d (target.variable_name, source.variable_name, target.alias_object, source.alias_object,
 					if stack.count > 1 then stack_top.caller_path else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]}.make end,
+					if stack.count > 1 then stack_top.caller_locals else create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make end,
 					stack_top.routine.e_feature.name_32 + "_",
 					stack_top.locals.has (create {ALIAS_KEY}.make (target.variable_name)),
 					stack_top.locals.has (create {ALIAS_KEY}.make (source.variable_name))

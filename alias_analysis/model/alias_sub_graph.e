@@ -38,7 +38,7 @@ feature -- Updating
 
 	updating_A_D (target_name, source_name: STRING; target_object, source_object: TWO_WAY_LIST [ALIAS_OBJECT];
 				target_path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-				target_path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]];
+				target_path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]];
 				routine_name: STRING; local_var_target, local_var_source: BOOLEAN)
 			-- updates the sets `additions' and `deletions' accordingly:
 			--	additions -> [`target_name': (`source_name', `source_object', `target_path', `path_locals')]
