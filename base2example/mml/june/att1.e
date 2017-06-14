@@ -6,11 +6,14 @@ create
 feature
 
 	test (var1: ATT2)
+		local
+			dd: STRING
 		do
 			---Problem1 --var1.tt--: does not give the right answer: it is missing var1.a: var1.v.a
-			---Problem1 var1.v2.tt
+			---Problem1
+			var1.v2.tt
 
-			var2.v2.tt
+			--var2.v2.tt
 
 		end
 

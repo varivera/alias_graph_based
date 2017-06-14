@@ -267,6 +267,7 @@ feature {NONE}
 
 	process_instr_call_as (a_node: INSTR_CALL_AS)
 		do
+			stop (110)
 			get_alias_info (Void, a_node.call).do_nothing
 		end
 
@@ -439,6 +440,7 @@ feature {NONE} -- utilities
 											create {EIFFEL_LIST [EXPR_AS]}.make (0)
 										end)
 				else
+					stop (909)
 					if attached a_target as target and then attached target.type as type and then attached type.base_class as base then
 							-- check if there are attributes to be added
 						alias_graph.update_class_atts (base, target.attributes)
@@ -552,6 +554,7 @@ feature {NONE} -- utilities
 
 
 							end
+							stop (906)
 							Result := get_alias_info (aliasses.item, l_node.message)
 							Result.add_entity (entities_caller)
 
@@ -734,6 +737,7 @@ feature {NONE} -- utilities
 						attached System.eiffel_universe.classes_with_name (target.type.name) as l_classes and then l_classes.count > 0
 					then
 						if l_classes.first.compiled_class.direct_descendants.count >= 1 then
+							stop (907)
 							alias_graph.init_dyn_bin
 							dyn_ana := True
 							across
@@ -749,9 +753,12 @@ feature {NONE} -- utilities
 							end
 						end
 					end
+					stop (908)
 					if alias_graph.is_dyn_bin and dyn_ana then
+						stop (909)
 						alias_graph.init_feature_version
 					end
+					stop (910)
 					Result := call_routine (a_target, a_routine, a_parameters)
 					if alias_graph.is_dyn_bin and dyn_ana then
 						alias_graph.finalising_dyn_bind
