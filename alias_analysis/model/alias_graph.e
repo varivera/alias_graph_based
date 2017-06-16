@@ -80,7 +80,16 @@ feature
 
 				--l_ent.extend (ent)
 				--l_local_ent.extend (ent_local)
-				l_local_ent := ent_local
+				--l_local_ent := ent_local
+
+				from
+					ent_local.start
+				until
+					ent_local.after
+				loop
+					l_local_ent.extend (ent_local.item)
+					ent_local.forth
+				end
 
 				if tracing then
 					io.new_line
@@ -613,6 +622,23 @@ feature -- Managing Conditionals
 						io.new_line
 					end
 				end
+
+				across
+					stack_top.caller_locals as aa
+				loop
+					across
+						aa.item as a
+					loop
+						print (a.key.name)
+						io.new_line
+						across
+							a.item as d
+						loop
+							print (d.item.out2)
+						end
+					end
+				end
+
 			end
 
 			if is_conditional_branch then

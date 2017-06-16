@@ -88,7 +88,7 @@ feature {ANY}
 			-- updates the locals of that object
 		require
 			attached name as n and then not n.is_empty
-			attached l as loc and then not loc.is_empty
+			attached l as loc-- and then not loc.is_empty
 		do
 			entity.force (name)
 			entity_locals.force (l)

@@ -221,7 +221,7 @@ feature {ANY}
 			-- updates the locals of that object
 		require
 			name_no_void: attached name as n and then not n.is_empty
-			l_no_void: attached l as loc and then not loc.is_empty
+			l_no_void: attached l-- as loc and then not loc.is_empty
 		do
 			entity.force (name)
 			entity_locals.force (l)

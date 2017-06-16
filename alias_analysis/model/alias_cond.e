@@ -158,6 +158,28 @@ feature -- Managing Conditionals Branches
 							io.new_line
 						end
 					end
+
+					if tracing then
+						print ("%N==========%N")
+						print ("new_object")
+						across
+							new_object as aaa
+						loop
+							print (aaa.item.out2)
+							print (", ")
+						end
+						io.new_line
+						print ("c_objs")
+						across
+							c_objs as aaa
+						loop
+							print (aaa.item.out2)
+							print (", ")
+						end
+						io.new_line
+						print ("%N==========%N")
+					end
+
 					if c_objs.has (n_o.item) then
 						if tracing then
 							io.new_line

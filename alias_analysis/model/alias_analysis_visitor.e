@@ -298,9 +298,9 @@ feature {NONE}
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 			end
-			show_graph
+--			show_graph
 			alias_graph.restore_graph
-			show_graph
+--			show_graph
 			if tracing then
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
@@ -308,16 +308,16 @@ feature {NONE}
 			safe_process (a_node.elsif_list)
 			alias_graph.init_cond_branch
 			safe_process (a_node.else_part)
-			show_graph
+--			show_graph
 				--Note: no need to restore the graph: alias_graph.restore_graph
 			alias_graph.restore_graph
-			show_graph
+--			show_graph
 			if tracing then
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 			end
 			alias_graph.finalising_cond
-			show_graph
+--			show_graph
 				-- update the deleted links in alias_pos_rec
 			alias_graph.stack_top.alias_pos_rec.update_del (alias_graph.inter_deletion_cond)
 			if tracing then
@@ -558,9 +558,28 @@ feature {NONE} -- utilities
 										end
 										print ("]")
 									end
+
+									print ("%N==============%N")
+									across
+										aliasses.item.entity_locals as tt
+									loop
+										io.new_line
+										--print (tt.key.name)
+										print ("[")
+										across
+											tt.item as k
+										loop
+											print (k.key.name)
+											print (": ")
+											across
+												k.item as o
+											loop
+												print (o.item.out2)
+											end
+										end
+										print ("]")
+									end
 								end
-
-
 							end
 							stop (906)
 							Result := get_alias_info (aliasses.item, l_node.message)
