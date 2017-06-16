@@ -45,7 +45,7 @@ feature
 			--  routine `a_routine' was called from entity `ent' in `qualified_call'
 		local
 			l_ent: TWO_WAY_LIST [TWO_WAY_LIST [STRING]]
-			l_local_ent: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+			l_local_ent: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 		do
 			if stack.count > 1 then
 				l_ent := stack.last.caller_path.twin
@@ -79,7 +79,8 @@ feature
 				end
 
 				--l_ent.extend (ent)
-				l_local_ent.extend (ent_local)
+				--l_local_ent.extend (ent_local)
+				l_local_ent := ent_local
 
 				if tracing then
 					io.new_line
@@ -785,7 +786,7 @@ feature -- Managing Recursion
 
 	pre_add, pre_del: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
 				obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-				path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+				path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 				], ALIAS_KEY]]
 			-- additions and deletions of the previous recursive calls.
 			-- TODO: To improve
@@ -806,7 +807,7 @@ feature -- Managing Recursion
 
 	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
 			obj: TWO_WAY_LIST [ALIAS_OBJECT]; path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-			path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+			path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 			], ALIAS_KEY]
 			-- returns the entities to be added to deletion after a conditional
 		do

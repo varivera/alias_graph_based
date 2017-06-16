@@ -90,7 +90,7 @@ feature -- Managing Conditionals Branches
 			name_entity,
 			feat_name: STRING;
 			path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-			path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]];
+			path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]];
 			index: INTEGER;
 			new_object: TWO_WAY_LIST [ALIAS_OBJECT])
 			-- deletes in `current_object'.`path' the added object: `new_object'
@@ -208,7 +208,8 @@ feature -- Managing Conditionals Branches
 					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
 						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))
 					elseif index >= 1 and index <= path_locals.count then
-						c_objs := obj_locals (path_locals, index, create {ALIAS_KEY}.make (paths.item))
+						--c_objs := obj_locals (path_locals, index, create {ALIAS_KEY}.make (paths.item))
+						c_objs := path_locals [index].at (create {ALIAS_KEY}.make (paths.item))
 					end
 
 
@@ -409,7 +410,7 @@ feature -- Information to Recursion
 	inter_deletion: HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
 				obj: TWO_WAY_LIST [ALIAS_OBJECT];
 				path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-				path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+				path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 				], ALIAS_KEY]
 			--after the execution of a conditional, `inter_deletion' will store the entities of those deleted links that
 			-- need to be put back on, e.g. if C then a := b else a:= c end: entity 'a' will be in the deletion list

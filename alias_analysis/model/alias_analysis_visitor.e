@@ -285,6 +285,7 @@ feature {NONE}
 				-- Alias Analysis does not take into account the condition. However,
 				-- it might be an object test with definition of a
 				-- fresh variable (hence, the need of processing it)
+
 			a_node.condition.process (Current)
 			alias_graph.init_cond
 			if tracing then
@@ -297,7 +298,9 @@ feature {NONE}
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 			end
+			show_graph
 			alias_graph.restore_graph
+			show_graph
 			if tracing then
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
@@ -305,14 +308,16 @@ feature {NONE}
 			safe_process (a_node.elsif_list)
 			alias_graph.init_cond_branch
 			safe_process (a_node.else_part)
-
+			show_graph
 				--Note: no need to restore the graph: alias_graph.restore_graph
 			alias_graph.restore_graph
+			show_graph
 			if tracing then
 				alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 				alias_graph.print_atts_depth (alias_graph.stack_top.locals)
 			end
 			alias_graph.finalising_cond
+			show_graph
 				-- update the deleted links in alias_pos_rec
 			alias_graph.stack_top.alias_pos_rec.update_del (alias_graph.inter_deletion_cond)
 			if tracing then
@@ -368,10 +373,10 @@ feature {NONE} -- utilities
 		local
 			output_file: PLAIN_TEXT_FILE
 		do
-			create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
-			output_file.put_string  (alias_graph.to_graph)
-			output_file.close;
---			(create {EXECUTION_ENVIRONMENT}).launch ("echo %"" + alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null")
+--			create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+--			output_file.put_string  (alias_graph.to_graph)
+--			output_file.close;
+			(create {EXECUTION_ENVIRONMENT}).launch ("echo %"" + alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null")
 		end
 
 	get_alias_info (a_target: ALIAS_OBJECT; a_node: AST_EIFFEL): ALIAS_OBJECT_INFO

@@ -51,7 +51,7 @@ feature -- Updating
 				name, abs_name, feat_name: STRING;
 				obj: TWO_WAY_LIST [ALIAS_OBJECT];
 				path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-				path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+				path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 				]
 			obj: TWO_WAY_LIST [ALIAS_OBJECT]
 		do
@@ -79,19 +79,19 @@ feature -- Updating
 				print (target_path_locals.count)
 				print ("[")
 				across
-					target_path_locals as tpl
+					target_path_locals as p
 				loop
 					print ("keys (")
-					across
-						tpl.item as p
-					loop
+--					across
+--						tpl.item as p
+--					loop
 						across
 							p.item.current_keys as k
 						loop
 							print (k.item)
 							print (",")
 						end
-					end
+--					end
 					print ("), ")
 				end
 				print ("]")
@@ -600,14 +600,14 @@ feature -- Managing Branches
 						name, abs_name, feat_name: STRING;
 						obj: TWO_WAY_LIST [ALIAS_OBJECT];
 						path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-						path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+						path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 						], ALIAS_KEY]}.make (0))
 			deletions.force (create {
 				HASH_TABLE [TUPLE [
 						name, abs_name, feat_name: STRING;
 						obj: TWO_WAY_LIST [ALIAS_OBJECT];
 						path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-						path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+						path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 						], ALIAS_KEY]}.make (0))
 		end
 
@@ -783,7 +783,7 @@ feature -- Managing merging nodes (for loops and recursion)
 			current_routine: ALIAS_ROUTINE;
 			name_entity, feat_name: STRING;
 			path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-			path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]];
+			path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]];
 			index: INTEGER;
 			old_object: TWO_WAY_LIST [ALIAS_OBJECT])
 			-- adds in `current_object'.`path' the deleted object: `old_object'
@@ -872,7 +872,8 @@ feature -- Managing merging nodes (for loops and recursion)
 					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
 						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))
 					elseif index >= 1 and index <= path_locals.count then
-						c_objs := obj_locals (path_locals, index, create {ALIAS_KEY}.make (paths.item))
+						--c_objs := obj_locals (path_locals, index, create {ALIAS_KEY}.make (paths.item))
+						c_objs := path_locals [index].at (create {ALIAS_KEY}.make (paths.item))
 					end
 
 					across
@@ -891,22 +892,22 @@ feature -- Managing merging nodes (for loops and recursion)
 			end
 		end
 
-	obj_locals (path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]];
-			index: INTEGER;
-			key: ALIAS_KEY
-			): TWO_WAY_LIST [ALIAS_OBJECT]
-			-- make `objs' point to the right table
-		require
-			index >= 1 and index <= path_locals.count
-		do
-			across
-				path_locals.at (index) as vals
-			loop
-				if not attached Result and then vals.item.has_key (key) then
-					Result := vals.item.at (key)
-				end
-			end
-		end
+--	obj_locals (path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]];
+--			index: INTEGER;
+--			key: ALIAS_KEY
+--			): TWO_WAY_LIST [ALIAS_OBJECT]
+--			-- make `objs' point to the right table
+--		require
+--			index >= 1 and index <= path_locals.count
+--		do
+--			across
+--				path_locals.at (index) as vals
+--			loop
+--				if not attached Result and then vals.item.has_key (key) then
+--					Result := vals.item.at (key)
+--				end
+--			end
+--		end
 
 feature -- Access
 	--TODO: to create a class with this structure
@@ -915,7 +916,7 @@ feature -- Access
 						name, abs_name, feat_name: STRING;
 						obj: TWO_WAY_LIST [ALIAS_OBJECT];
 						path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-						path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+						path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 						], ALIAS_KEY]];
 
 		-- stores the edges added by a step (A_i in the def): the key is the name of the entity to be added (it contains all path)
@@ -1006,7 +1007,7 @@ feature --{NONE} -- To Delete
 			ttt: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
 			obj: TWO_WAY_LIST [ALIAS_OBJECT];
 			path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-			path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+			path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 			], ALIAS_KEY]]
 		do
 			if tracing then
@@ -1062,19 +1063,19 @@ feature --{NONE} -- To Delete
 							end
 							print ("] path_locals: [")
 							across
-								pair_add.item.path_locals as tpl
+								pair_add.item.path_locals as p
 							loop
 								print ("keys (")
-								across
-									tpl.item as p
-								loop
+--								across
+--									tpl.item as p
+--								loop
 									across
 										p.item.current_keys as k
 									loop
 										print (k.item)
 										print (",")
 									end
-								end
+--								end
 								print ("), ")
 							end
 							print ("] abs_name: ")
@@ -1104,7 +1105,7 @@ feature --{NONE} -- To Delete
 			ttt: TWO_WAY_LIST [HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
 			obj: TWO_WAY_LIST [ALIAS_OBJECT];
 			path: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-			path_locals: TWO_WAY_LIST [TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]]
+			path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 			], ALIAS_KEY]]
 			va: INTEGER
 		do
@@ -1159,19 +1160,19 @@ feature --{NONE} -- To Delete
 							end
 							print ("] path_locals: [")
 							across
-								pair_add.item.path_locals as tpl
+								pair_add.item.path_locals as p
 							loop
 								print ("keys (")
-								across
-									tpl.item as p
-								loop
+--								across
+--									tpl.item as p
+--								loop
 									across
 										p.item.current_keys as k
 									loop
 										print (k.item)
 										print (",")
 									end
-								end
+--								end
 								print ("), ")
 							end
 							print ("] abs_name: ")
