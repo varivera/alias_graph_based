@@ -68,12 +68,46 @@ feature {NONE}
 					and class_.feature_table.features.at (i).e_feature.associated_class.class_id = class_.class_id
 					and attached {E_ROUTINE} class_.feature_table.features.at (i).e_feature as r
 					and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as p
-						-- TODO
+						-- TODO: To solve (EiffelBase2)
+					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "subtree_twin"))
+					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend"))
+					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "wipe_out"))
+					and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_insert_left"))
+					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
+					and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "remove"))
+					and (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse"))
 
 						-- TUPLES / agents: not supported yet
 					and (class_.name ~ "V_HASH_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "search"))
 					and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make_at_key"))
 					and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "search_key"))
+					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "less_equal"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "item"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "at"))
+					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "less_equal"))
+					and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_one"))
+					and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_one_predicate"))
+					and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_two"))
+					and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_two_predicate"))
+					and (class_.name ~ "V_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "default_create"))
+					and (class_.name ~ "V_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "default_create"))
+					and (class_.name ~ "V_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "with_object_equality"))
+					and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make"))
+					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make"))
+					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "key_equivalence"))
+
+						-- ADDRESS_CURRENT_AS -> not supported
+					and (class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code"))
+
 
 						-- Weird problem: Eiffel gives VOID error when trying to access it
 					and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "key"))
@@ -86,11 +120,8 @@ feature {NONE}
 					and (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_at"))
 
 
-
-
 					and (class_.name ~ "FLAT_ARRAY" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "do_if_with_index"))
 					and (class_.name ~ "FLAT_ARRAY" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "do_all_with_index"))
-
 --					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "ll_move"))
 --					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend"))
 --					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "merge_left"))
@@ -102,16 +133,6 @@ feature {NONE}
 --					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "ll_put_front"))
 --					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "ll_put_right"))
 --					and (class_.name ~ "FLAT_TWO_WAY_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "remove"))
-
-					and not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out")
-					and (class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code"))
-					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_insert_left"))
-					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
-					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_index"))
-					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "index"))
-					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
-					and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "start"))
-					and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "finish"))
 					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "has"))
 					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "index_of"))
 					and (class_.name ~ "FLAT_LINKED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "sequential_has"))
@@ -146,6 +167,9 @@ feature {NONE}
 					and not (class_.name ~ "FLAT_INDEXABLE_ITERATION_CURSOR")
 					and not (class_.name ~ "FLAT_INTEGER_INTERVAL")
 					and not (class_.name ~ "FLAT_LINKED_LIST")
+
+					and not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out")
+
 				then
 					print ("====Feature: ")
 					print (class_.feature_table.features.at (i).e_feature.name_32)
