@@ -25,7 +25,16 @@ feature {NONE}
 			routine := a_routine
 			locals := a_locals
 			caller_path := a_caller_path
-			caller_locals := a_caller_locals
+			create caller_locals.make
+			from
+				a_caller_locals.start
+			until
+				a_caller_locals.after
+			loop
+				caller_locals.extend (a_caller_locals.item)
+				a_caller_locals.forth
+			end
+			--caller_locals := a_caller_locals
 			create alias_pos_rec.make
 
 			create map_funct.make (0)

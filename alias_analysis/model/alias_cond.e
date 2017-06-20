@@ -101,42 +101,37 @@ feature -- Managing Conditionals Branches
 			c_objs: TWO_WAY_LIST [ALIAS_OBJECT]
 			real_name: STRING
 		do
+			if Tracing then
+				print ("%N%NInof pathlocals%N%N")
+				across
+					path_locals as pl
+				loop
+					print ("%N%Npos:%N")
+					across
+						pl.item as ht
+					loop
+						print ("key: ")
+						print (ht.key.name)
+						io.new_line
+						print ("objs: ")
+						across
+							ht.item as oo
+						loop
+							print (oo.item.out2)
+							print (", ")
+						end
+						io.new_line
+					end
+				end
+			end
 			create real_name.make_from_string (name_entity)
 			real_name.replace_substring_all (feat_name, "")
 
 			if tracing then
 				print (name_entity)
-				io.new_line
-				across
-					current_object.attributes.current_keys as kk
-				loop
-					print ("        ")
-					print (kk.item)
-					io.new_line
-				end
 			end
 			if index > path.count then
-				if tracing then
-					across
-						current_object.attributes as aa
-					loop
-						print (aa.key)
-						print (": ")
-						across
-							aa.item as bb
-						loop
-							print (bb.item.out2)
-							print (", ")
-						end
-						io.new_line
-						io.new_line
-					end
-				end
 				create c_objs.make
-				if tracing then
-					print (name_entity)
-					io.new_line
-				end
 				if current_object.attributes.has (create {ALIAS_KEY}.make (name_entity)) then
 					c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (name_entity))
 				elseif name_entity.ends_with ("_Result") then
@@ -144,76 +139,32 @@ feature -- Managing Conditionals Branches
 				elseif current_routine.locals.has (create {ALIAS_KEY}.make (real_name)) then
 					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (real_name))
 				end
+				if tracing then
+					print ("%NElements in c_objs%N")
+					across
+						c_objs as c
+					loop
+						print ("obj1: ")
+						print (c.item.out2)
+						io.new_line
+					end
+				end
 				across
 					new_object as n_o
 				loop
 					if tracing then
-						print (name_entity)
+						print ("%Nnew_object being analysed: ")
+						print (n_o.item.out2)
 						io.new_line
-						across
-							current_object.attributes.current_keys as kk
-						loop
-							print ("        ")
-							print (kk.item)
-							io.new_line
-						end
-					end
-
-					if tracing then
-						print ("%N==========%N")
-						print ("new_object")
-						across
-							new_object as aaa
-						loop
-							print (aaa.item.out2)
-							print (", ")
-						end
-						io.new_line
-						print ("c_objs")
-						across
-							c_objs as aaa
-						loop
-							print (aaa.item.out2)
-							print (", ")
-						end
-						io.new_line
-						print ("%N==========%N")
 					end
 
 					if c_objs.has (n_o.item) then
-						if tracing then
-							io.new_line
-							print ("to search: ")
-							print (n_o.item.out2)
-							print ("%Nlist: ")
-							across
-								c_objs as aa
-							loop
-								io.new_line
-								print (aa.item.out2)
-							end
-
-							io.new_line
-							print (c_objs.has (n_o.item))
-
-						end
 						c_objs.start
 						c_objs.search (n_o.item)
 						if tracing then
 							print (c_objs.exhausted)
 						end
 						c_objs.remove
-					end
-					if tracing then
-						print (name_entity)
-						io.new_line
-						across
-							current_object.attributes.current_keys as kk
-						loop
-							print ("        ")
-							print (kk.item)
-							io.new_line
-						end
 					end
 				end
 
@@ -239,22 +190,12 @@ feature -- Managing Conditionals Branches
 						print ("path.item: ")
 						print (paths.item)
 						Io.new_line
-						print ("Attributes:%N")
+						print ("vars in objs:%N")
 						across
-							current_object.attributes.current_keys as kk
+							c_objs as kk
 						loop
 							print ("        ")
-							print (kk.item)
-							Io.new_line
-						end
-
-						print ("locals")
-						Io.new_line
-						across
-							current_routine.locals.current_keys as kk
-						loop
-							print ("        ")
-							print (kk.item)
+							print (kk.item.out2)
 							Io.new_line
 						end
 					end

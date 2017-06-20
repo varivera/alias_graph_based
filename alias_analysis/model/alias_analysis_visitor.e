@@ -1015,6 +1015,7 @@ feature {NONE} -- utilities
 						end
 					end
 				else
+					stop (1000)
 					a_routine.body.process (Current)
 				end
 				if tracing then

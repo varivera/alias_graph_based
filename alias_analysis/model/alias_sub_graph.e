@@ -54,7 +54,31 @@ feature -- Updating
 				path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 				]
 			obj: TWO_WAY_LIST [ALIAS_OBJECT]
+			tmp_path_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 		do
+
+			if tracing then
+				print ("%N==============%N")
+				across
+					target_path_locals as tt
+				loop
+					io.new_line
+					print ("[")
+					across
+						tt.item as k
+					loop
+						print (k.key.name)
+						print (": ")
+						across
+							k.item as o
+						loop
+							print (o.item.out2)
+						end
+					end
+					print ("]")
+				end
+			end
+
 			if tracing then
 				io.new_line
 				print ("target_path: ")
@@ -140,7 +164,17 @@ feature -- Updating
 				tup.name := "Void"
 			end
 			tup.path := target_path.deep_twin
-			tup.path_locals := target_path_locals.deep_twin
+			--tup.path_locals := target_path_locals.deep_twin
+			create tmp_path_locals.make
+			from
+				target_path_locals.start
+			until
+				target_path_locals.after
+			loop
+				tmp_path_locals.extend (target_path_locals.item)
+				target_path_locals.forth
+			end
+			tup.path_locals := tmp_path_locals.twin
 			create obj.make
 			stop2 (12)
 			if attached source_object as so then
@@ -196,7 +230,18 @@ feature -- Updating
 				tup.name := target_name
 			end
 			tup.path := target_path.deep_twin
-			tup.path_locals := target_path_locals.deep_twin
+			--tup.path_locals := target_path_locals.deep_twin
+			create tmp_path_locals.make
+			from
+				target_path_locals.start
+			until
+				target_path_locals.after
+			loop
+				tmp_path_locals.extend (target_path_locals.item)
+				target_path_locals.forth
+			end
+			tup.path_locals := tmp_path_locals.twin
+
 			create obj.make
 			stop2 (4)
 			if attached target_object as target then
@@ -216,6 +261,27 @@ feature -- Updating
 			stop2 (5)
 			if tracing then
 				printing_vars (1)
+			end
+			if tracing then
+				print ("%N==============%N")
+				across
+					tup.path_locals as tt
+				loop
+					io.new_line
+					print ("[")
+					across
+						tt.item as k
+					loop
+						print (k.key.name)
+						print (": ")
+						across
+							k.item as o
+						loop
+							print (o.item.out2)
+						end
+					end
+					print ("]")
+				end
 			end
 		end
 

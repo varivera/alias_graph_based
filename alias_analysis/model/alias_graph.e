@@ -92,6 +92,28 @@ feature
 				end
 
 				if tracing then
+					print ("%N==============%N")
+					across
+						l_local_ent as tt
+					loop
+						io.new_line
+						print ("[")
+						across
+							tt.item as k
+						loop
+							print (k.key.name)
+							print (": ")
+							across
+								k.item as o
+							loop
+								print (o.item.out2)
+							end
+						end
+						print ("]")
+					end
+				end
+
+				if tracing then
 					io.new_line
 					print (l_ent.count)
 					io.new_line
@@ -102,11 +124,55 @@ feature
 						a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]}.make (16),
 						l_ent, l_local_ent))
 
+			if tracing then
+					print ("%N==============%N")
+					across
+						stack_top.caller_locals as tt
+					loop
+						io.new_line
+						print ("[")
+						across
+							tt.item as k
+						loop
+							print (k.key.name)
+							print (": ")
+							across
+								k.item as o
+							loop
+								print (o.item.out2)
+							end
+						end
+						print ("]")
+					end
+				end
+
 				-- to retrieve the class in which a_routine is
 			if qualified_call or stack.count = 1 then
 				update_class_atts_routine (a_routine)
 			end
 			update_feat_signature (a_routine)
+
+			if tracing then
+					print ("%N==============%N")
+					across
+						stack_top.caller_locals as tt
+					loop
+						io.new_line
+						print ("[")
+						across
+							tt.item as k
+						loop
+							print (k.key.name)
+							print (": ")
+							across
+								k.item as o
+							loop
+								print (o.item.out2)
+							end
+						end
+						print ("]")
+					end
+				end
 		end
 
 	update_class_atts_routine (a_routine: PROCEDURE_I)
