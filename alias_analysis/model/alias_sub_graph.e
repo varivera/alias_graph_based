@@ -862,57 +862,18 @@ feature -- Managing merging nodes (for loops and recursion)
 		do
 			create real_name.make_from_string (name_entity)
 			real_name.replace_substring_all (feat_name, "")
-			if index > path.count then
-				if tracing then
-					across
-						current_object.attributes as aa
-					loop
-						print (aa.key)
-						print (": ")
-						across
-							aa.item as bb
-						loop
-							print (bb.item.out2)
-							print (", ")
-						end
-						io.new_line
-						io.new_line
-					end
-				end
-				if tracing then
-					print_atts_depth (current_object.attributes)
-					io.new_line
-					print_atts_depth (current_routine.locals)
-					io.new_line
-					print (name_entity)
-					io.new_line
-					print (current_object.attributes.count)
-					io.new_line
-					if current_object.attributes.at (create {ALIAS_KEY}.make (name_entity)) = Void then
-						io.new_line
-						print ("Void")
-						io.new_line
-						print (current_object.attributes.count)
-					end
-				end
---				if current_object.attributes.at (create {ALIAS_KEY}.make (name_entity)) = Void then
---					io.new_line
---					print ("Void")
---				end
 
-					-- the variable should exist (no need to check)
-				if name_entity.ends_with ("_Result") then
+			if index > path.count then
+				create c_objs.make
+
+				if current_object.attributes.has (create {ALIAS_KEY}.make (name_entity)) then
+					c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (name_entity))
+				elseif name_entity.ends_with ("_Result") then
 					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make ("Result"))
 				elseif current_routine.locals.has (create {ALIAS_KEY}.make (real_name)) then
 					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (real_name))
-				elseif current_object.attributes.has (create {ALIAS_KEY}.make (name_entity)) then
-					c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (name_entity))
-				else
-						--				elseif current_routine.current_object.attributes.has (name_entity) then
-						--					c_objs := current_routine.current_object.attributes.at (name_entity)
-						--				else
-
 				end
+
 				across
 					old_object as o_o
 				loop
@@ -924,16 +885,7 @@ feature -- Managing merging nodes (for loops and recursion)
 				across
 					path.at (index) as paths
 				loop
-					if tracing then
-						print_atts_depth (current_object.attributes)
-						io.new_line
-						print_atts_depth (current_routine.locals)
-						io.new_line
-						print (name_entity)
-						io.new_line
-						print (paths.item)
-						io.new_line
-					end
+
 						-- either a class attribute or a local
 					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
 						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))

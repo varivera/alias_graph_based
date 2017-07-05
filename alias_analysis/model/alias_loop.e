@@ -197,29 +197,33 @@ feature {NONE} -- Helpers
 							across
 								values.item.obj as to_add
 							loop
-								if tracing then
-									print ("%N%N%N-DELETIONS------------------------------%N%N%N")
-									printing_vars (1)
-									print ("%N%N%N-CONDITIONAL-------------------------------%N%N%N")
-									printing_va (conditional)
-									print ("%N%N%NDone-------------------------------%N%N%N")
-									print ("count: ")
-									print (conditional.count)
-									print ("%N%N%NDone-------------------------------%N%N%N")
-									print (conditional.last)
-									print ("%N%N%NDone-------------------------------%N%N%N")
-									print (values.key)
-									print ("%N%N%NDone-------------------------------%N%N%N")
-									print (conditional.last.at (values.key))
-									print ("%N%N%NDone-------------------------------%N%N%N")
-									print (conditional.last.at (values.key).obj)
-									print ("%N%N%NDone-------------------------------%N%N%N")
-									print (conditional.last.at (values.key).obj.has (to_add.item))
-									print ("%N%N%NDone-------------------------------%N%N%N")
+								if conditional.last.has (values.key) then
+									if tracing then
+										print ("%N%N%N-DELETIONS------------------------------%N%N%N")
+										printing_vars (1)
+										print ("%N%N%N-CONDITIONAL-------------------------------%N%N%N")
+										printing_va (conditional)
+										print ("%N%N%NDone-------------------------------%N%N%N")
+										print ("count: ")
+										print (conditional.count)
+										print ("%N%N%NDone-------------------------------%N%N%N")
+										print (conditional.last)
+										print ("%N%N%NDone-------------------------------%N%N%N")
+										print (values.key)
+										print ("%N%N%NDone-------------------------------%N%N%NDoes Conditional have the key?: ")
+										print (conditional.last.has (values.key))
+										print ("%N%N%NDone-------------------------------%N%N%N")
+										print (conditional.last.at (values.key))
+										print ("%N%N%NDone-------------------------------%N%N%N")
+										print (conditional.last.at (values.key).obj)
+										print ("%N%N%NDone-------------------------------%N%N%N")
+										print (conditional.last.at (values.key).obj.has (to_add.item))
+										print ("%N%N%NDone-------------------------------%N%N%N")
 
-								end
-								if not conditional.last.at (values.key).obj.has (to_add.item) then
-									conditional.last.at (values.key).obj.force (to_add.item)
+									end
+									if not conditional.last.at (values.key).obj.has (to_add.item) then
+										conditional.last.at (values.key).obj.force (to_add.item)
+									end
 								end
 							end
 
@@ -234,7 +238,7 @@ feature {NONE} -- Helpers
 
 feature -- Access
 	cond_add: detachable like additions
-		-- contains a alias to additions in conditionals (in case of loop inside a conditional) so to
+		-- contains an alias to additions in conditionals (in case of loop inside a conditional) so to
 		-- update the corresponing added links
 
 invariant

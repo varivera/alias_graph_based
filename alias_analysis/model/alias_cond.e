@@ -101,29 +101,6 @@ feature -- Managing Conditionals Branches
 			c_objs: TWO_WAY_LIST [ALIAS_OBJECT]
 			real_name: STRING
 		do
-			if Tracing then
-				print ("%N%NInof pathlocals%N%N")
-				across
-					path_locals as pl
-				loop
-					print ("%N%Npos:%N")
-					across
-						pl.item as ht
-					loop
-						print ("key: ")
-						print (ht.key.name)
-						io.new_line
-						print ("objs: ")
-						across
-							ht.item as oo
-						loop
-							print (oo.item.out2)
-							print (", ")
-						end
-						io.new_line
-					end
-				end
-			end
 			create real_name.make_from_string (name_entity)
 			real_name.replace_substring_all (feat_name, "")
 
@@ -139,25 +116,9 @@ feature -- Managing Conditionals Branches
 				elseif current_routine.locals.has (create {ALIAS_KEY}.make (real_name)) then
 					c_objs := current_routine.locals.at (create {ALIAS_KEY}.make (real_name))
 				end
-				if tracing then
-					print ("%NElements in c_objs%N")
-					across
-						c_objs as c
-					loop
-						print ("obj1: ")
-						print (c.item.out2)
-						io.new_line
-					end
-				end
 				across
 					new_object as n_o
 				loop
-					if tracing then
-						print ("%Nnew_object being analysed: ")
-						print (n_o.item.out2)
-						io.new_line
-					end
-
 					if c_objs.has (n_o.item) then
 						c_objs.start
 						c_objs.search (n_o.item)
@@ -181,23 +142,7 @@ feature -- Managing Conditionals Branches
 					if current_object.attributes.has (create {ALIAS_KEY}.make (paths.item)) then
 						c_objs := current_object.attributes.at (create {ALIAS_KEY}.make (paths.item))
 					elseif index >= 1 and index <= path_locals.count then
-						--c_objs := obj_locals (path_locals, index, create {ALIAS_KEY}.make (paths.item))
 						c_objs := path_locals [index].at (create {ALIAS_KEY}.make (paths.item))
-					end
-
-
-					if Tracing then
-						print ("path.item: ")
-						print (paths.item)
-						Io.new_line
-						print ("vars in objs:%N")
-						across
-							c_objs as kk
-						loop
-							print ("        ")
-							print (kk.item.out2)
-							Io.new_line
-						end
 					end
 
 					across
