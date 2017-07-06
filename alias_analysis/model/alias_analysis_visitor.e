@@ -788,6 +788,7 @@ feature {NONE} -- utilities
 						alias_graph.init_feature_version
 					end
 					stop (910)
+					
 					Result := call_routine (a_target, a_routine, a_parameters)
 					if alias_graph.is_dyn_bin and dyn_ana then
 						alias_graph.finalising_dyn_bind
@@ -957,7 +958,26 @@ feature {NONE} -- utilities
 						if tracing then
 							alias_graph.print_atts_depth (alias_graph.stack_top.current_object.attributes)
 							alias_graph.print_atts_depth (alias_graph.stack_top.locals)
+							io.new_line
+							print (attached {FORMAL_A} a_target.type.base_class)
+							io.new_line
+							print (attached {FORMAL_A} a_target.type)
+							io.new_line
+							print (a_target.type.actual_type)
+							io.new_line
+							print (a_target.type.actual_type.base_class)
+							io.new_line
+							print (a_target.type.conformance_type)
+							io.new_line
+							print (a_target.type.generic_derivation)
+							io.new_line
+							print (a_target.type.intrinsic_type)
+							io.new_line
+							print (a_target.type.name)
+							io.new_line
+							print (a_target.type.conformance_type.base_class)
 						end
+						-- TODO: there is a problem when attached {FORMAL_A} a_target.type. there is not information about the generic class
 						alias_graph.update_class_atts (a_target.type.base_class, a_target.attributes)
 						alias_graph.stack_top.locals.force (create {TWO_WAY_LIST [ALIAS_OBJECT]}.make, create {ALIAS_KEY}.make ("Result"))
 						create objs.make (a_target.type)
