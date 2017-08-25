@@ -100,20 +100,24 @@ feature {ANY}
 			is_variable
 		local
 			l_obj: TWO_WAY_LIST [ALIAS_OBJECT]
+			has_void_map: BOOLEAN
 		do
+			has_void_map := across variable_map as objs some attached {VOID_A} objs.item end
 			if attached alias_object as objs and then objs.first.type.is_expanded then
 					-- do not perform any action if the object is expanded
 
 			elseif a_alias_object = Void then
-				--alias_object := Void
-				--variable_map.remove (variable_name)
-				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make_void)
-				alias_object := l_obj
-				if tracing then
-					print_atts_depth (variable_map)
+					-- check whether VOID was already there. If so, do not add
+				if not has_void_map then
+					create l_obj.make
+					l_obj.force (create {ALIAS_OBJECT}.make_void)
+					alias_object := l_obj
+					if tracing then
+						print_atts_depth (variable_map)
+					end
+						--
+					variable_map [create {ALIAS_KEY}.make (variable_name)] := l_obj
 				end
-				variable_map [create {ALIAS_KEY}.make (variable_name)] := l_obj
 				if tracing then
 					print_atts_depth (variable_map)
 				end
@@ -140,7 +144,7 @@ feature {ANY}
 					loop
 						if not attached {VOID_AS} aliases.item then
 							l_obj.force (aliases.item)
-						elseif alias_object.first.type.has_detachable_mark then
+						elseif alias_object.first.type.has_detachable_mark and not has_void_map then
 							l_obj.force (aliases.item)
 						end
 					end
@@ -172,6 +176,17 @@ feature {ANY}
 			l_type_checker: AST_FEATURE_CHECKER_GENERATOR
 			l_type: TYPE_A
 		do
+			if tracing then
+				io.new_line
+				print (variable_name)
+				io.new_line
+				print (context_routine.feature_name_32)
+				io.new_line
+				print (attached context_routine.written_class.feature_named_32 (variable_name))
+				io.new_line
+				--System.eiffel_universe.
+
+			end
 			if variable_name.is_equal ("Result") then
 					-- Result
 				l_type := context_routine.type

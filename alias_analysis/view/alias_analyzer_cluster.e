@@ -69,25 +69,25 @@ feature {NONE}
 					and attached {E_ROUTINE} class_.feature_table.features.at (i).e_feature as r
 					and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as p
 
-						-- progress
-					--and (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse"))
-					--and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend"))
-					--and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "wipe_out"))
-
-					-- July 06th
-					and (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_prepend"))
-
+					-- July 24th
+					--introduced errors:
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "auto_resize")) -- not sure if ok
+					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_copy"))
+					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
 
 
 					-- TODO: To check out: problem with parameter
 					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "subtree_twin"))
+					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_subtree_twin"))
 					 -- copy calls subtree_twin
 					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_copy"))
 					 -- calls copy and copy calls subtree_twin
 					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
 					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
-						-- calls V_GENERAL_SORTED_TABLE/copy
+						-- calls V_GENERAL_SORTED_TABLE/copy -> no information about a generic type
 					and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test2_copy"))
 
 						-- TODO: To solve (EiffelBase2)
 					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
@@ -115,6 +115,11 @@ feature {NONE}
 					and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make"))
 					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make"))
 					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "key_equivalence"))
+
+
+						-- Should we consider:
+						-- if v = Void then do_something else v.w end
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "merge"))
 
 						-- ADDRESS_CURRENT_AS -> not supported
 					and (class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code"))
@@ -185,6 +190,7 @@ feature {NONE}
 					and not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out")
 
 				then
+
 					print ("====Feature: ")
 					print (class_.feature_table.features.at (i).e_feature.name_32)
 					print ("==(")
@@ -199,11 +205,11 @@ feature {NONE}
 						print (l_visitor.alias_graph.to_string)
 						io.new_line
 						print (l_visitor.alias_graph.to_graph)
-						io.new_line
+						io.new_line;
 
-							--								(create {EXECUTION_ENVIRONMENT}).launch (
-							--									"echo %"" + l_visitor.alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
-							--								)
+						(create {EXECUTION_ENVIRONMENT}).launch (
+						 "echo %"" + l_visitor.alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
+						)
 					end
 				end
 				i := i + 1

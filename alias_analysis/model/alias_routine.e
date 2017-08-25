@@ -13,7 +13,7 @@ create {ALIAS_GRAPH}
 feature {NONE}
 
 	make (a_current_object: like current_object; a_routine: like routine; a_locals: like locals;
-					a_caller_path: like caller_path; a_caller_locals: like caller_locals)
+					a_caller_path: like caller_path; a_caller_locals: like caller_locals; a_base_id: INTEGER)
 		require
 			a_current_object /= Void
 			a_routine /= Void
@@ -38,6 +38,8 @@ feature {NONE}
 			create alias_pos_rec.make
 
 			create map_funct.make (0)
+
+			base_id := a_base_id
 		ensure
 			current_object = a_current_object
 			routine = a_routine
@@ -81,9 +83,13 @@ feature {ANY}
 			-- manages edges and nodes of the graph in case of fixpoint by recursion
 			-- alias_pos_rec stands for alias possible recursion
 
-feature -- Test (March 06) TODO
 	map_funct: HASH_TABLE [TWO_WAY_LIST [STRING], ALIAS_KEY]
 			-- maps a function called to actual return values in attributes
+
+feature -- Test (TODO)
+	base_id: INTEGER
+			-- in a qualified call x.v, `base_id' contains the id of class 'x'
+			-- in an unqualified call v, `base_id' contains the id of class where 'v' is
 
 
 feature {ANY}

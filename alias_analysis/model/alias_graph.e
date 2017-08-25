@@ -1,3 +1,4 @@
+
 class
 	ALIAS_GRAPH
 
@@ -20,7 +21,7 @@ feature {NONE}
 			create alias_dyn.make
 			create stack.make
 			stack_push (create {ALIAS_OBJECT}.make (a_routine.written_class.actual_type), a_routine,
-						Void, Void, False)
+						Void, Void, False, a_routine.access_class.class_id)
 			if tracing then
 				print_atts_depth (stack_top.current_object.attributes)
 				print_atts_depth (stack_top.locals)
@@ -40,7 +41,8 @@ feature
 
 	stack_push (a_current_object: ALIAS_OBJECT; a_routine: PROCEDURE_I;
 				ent: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-				ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]; qualified_call: BOOLEAN)
+				ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]];
+				qualified_call: BOOLEAN; base_class_id: INTEGER)
 			-- adds a context `a_routine' to the ALIAS_GRAPH having a ref to `a_current_object'
 			--  routine `a_routine' was called from entity `ent' in `qualified_call'
 		local
@@ -122,7 +124,7 @@ feature
 			end
 			stack.extend (create {ALIAS_ROUTINE}.make (
 						a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]}.make (16),
-						l_ent, l_local_ent))
+						l_ent, l_local_ent, base_class_id))
 
 			if tracing then
 					print ("%N==============%N")
@@ -176,8 +178,8 @@ feature
 		end
 
 	update_class_atts_routine (a_routine: PROCEDURE_I)
-			-- updates, in the graph, the class attributes in which `a_routine' is
-			-- it adds a Void reference to those detachable references.
+			-- updates, in the graph, the class attributes in which `a_routine' is.
+			-- It adds a Void reference to those detachable references.
 		do
 			update_class_atts (a_routine.access_class, stack_top.current_object.attributes)
 		end
@@ -204,7 +206,6 @@ feature
 					obj_vars.force (l_obj, create {ALIAS_KEY}.make (const.item.name_32))
 				end
 			end
-
 			across
 				a_class.skeleton as att
 			loop
@@ -213,18 +214,18 @@ feature
 					io.new_line
 				end
 				if not obj_vars.has (create {ALIAS_KEY}.make (att.item.attribute_name)) then
+						-- to retrieve their types and to add them to the stack
+					create l_obj.make
+					l_obj.force (create {ALIAS_OBJECT}.make (att.item.type_i))
+					obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
+
+						-- if the class attribute is declared as detachable an additional
+						--	type is added: Void. detachable can be either Void or be attached to
+						--	some specific type
 					if att.item.type_i.has_detachable_mark then
 							-- to retrieve their types and to add them to the stack
-						create l_obj.make
-						l_obj.force (create {ALIAS_OBJECT}.make_void)
-						obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
-					else
-							-- to retrieve their types and to add them to the stack
-						create l_obj.make
-						l_obj.force (create {ALIAS_OBJECT}.make (att.item.type_i))
-						obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
+						obj_vars.at (create {ALIAS_KEY}.make (att.item.attribute_name)).force (create {ALIAS_OBJECT}.make_void)
 					end
-
 				end
 			end
 		end
@@ -247,6 +248,14 @@ feature
 						create l_obj.make
 						l_obj.force (create {ALIAS_OBJECT}.make (type))
 						stack_top.locals.force (l_obj, create {ALIAS_KEY}.make (args_names.at (i)))
+
+							-- if the argument is declared as detachable an additional
+							--	type is added: Void. detachable can be either Void or be attached to
+							--	some specific type
+						if args.at (i).has_detachable_mark then
+								-- to retrieve their types and to add them to the stack
+							stack_top.locals.at (create {ALIAS_KEY}.make (args_names.at (i))).force (create {ALIAS_OBJECT}.make_void)
+						end
 					end
 					i := i + 1
 				end
@@ -258,6 +267,16 @@ feature
 					create l_obj.make
 					l_obj.force (create {ALIAS_OBJECT}.make (type))
 						stack_top.locals.force (l_obj, create {ALIAS_KEY}.make ("Result"))
+
+
+						-- if the return value is declared as detachable an additional
+						--	type is added: Void. detachable can be either Void or be attached to
+						--	some specific type
+					if type.has_detachable_mark then
+							-- to retrieve their types and to add them to the stack
+						stack_top.locals.at (create {ALIAS_KEY}.make ("Result")).force (create {ALIAS_OBJECT}.make_void)
+					end
+
 				else
 						-- TODO
 				end
@@ -840,7 +859,7 @@ feature -- Managing Loops
 feature -- Managing Recursion
 
 	check_recursive_fix_point (routine_name: STRING)
-			-- checks for fix point reached in a recursive call. It set variables
+			-- checks for fix point reached in a recursive call. It sets variables
 			--	is_recursive_fix_point to True in case of fix point reached and
 			--  rec_last_locals to the locals variables of the last routine
 		local
@@ -886,15 +905,28 @@ feature -- Managing Recursion
 	fix_point: INTEGER = 2
 			-- `n_fixpoint' is a fix number: upper bound for rec
 
-	finalising_recursion
+	finalising_recursion (routine_name: STRING)
 			-- finalises the operations of recursion in case of fix pont
 		require
 			is_recursive_fix_point;
 			(pre_add.count = pre_del.count) and (pre_add.count = 3)
+		local
+			i: INTEGER
 		do
 				-- retrieve additions and deletions
 				-- TODO: should I delete them as well? (additions and deletions of previous calls)
 			stack_top.alias_pos_rec.finalising_recursive_call (stack.first, stack_top, pre_add, pre_del)
+			from
+				i := 1
+			until
+				i > fix_point or stack.is_empty
+			loop
+				if stack_top.routine.feature_name_32 ~ routine_name then
+					i := i + 1
+				end
+				stack_pop
+			end
+
 		end
 
 	inter_deletion_cond: HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
@@ -951,10 +983,10 @@ feature -- Managing possible Dyn Bind
 			end
 			alias_dyn.finalising_dyn_bind (stack.first, stack_top)
 		end
-
+stack: TWO_WAY_LIST [ALIAS_ROUTINE]
 feature {NONE} -- Access
 
-	stack: TWO_WAY_LIST [ALIAS_ROUTINE]
+	--stack: TWO_WAY_LIST [ALIAS_ROUTINE]
 			-- `stack' implements the ALIAS_GRAPH
 
 	alias_cond: ALIAS_COND
