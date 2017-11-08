@@ -48,9 +48,6 @@ feature -- Managing Loop Iterations
 		local
 				output_file: PLAIN_TEXT_FILE
 		do
-			if tracing then
-				printing_vars (1)
-			end
 			if fixpoint_reached = 2 then
 					-- remove the last two iteration: they are the same
 				deletions.finish
@@ -59,13 +56,28 @@ feature -- Managing Loop Iterations
 				deletions.remove
 			end
 
+			
 				-- i. add deleted links
 			add_deleted_links (root, current_routine)
+
+			if tracing then
+				printing_vars (1)
+				print_atts_depth (root.current_object.attributes)
+				print_atts_depth (root.locals)
+				if attached (create {TRACING}.plot (g.to_graph)) then
+
+				end
+			end
 
 				-- ii. subsume nodes (if any): subsume(n1, n2) (n2 will become n1)
 			if fixpoint_reached = 3 then
 					-- Subsuming corresponding nodes
 				subsume (root)
+				if tracing then
+					if attached (create {TRACING}.plot (g.to_graph)) then
+
+					end
+				end
 			end
 		end
 

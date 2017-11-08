@@ -1,9 +1,21 @@
 class
 	TRACING
-
+create
+	plot
 feature
-	tracing: BOOLEAN = false
+	tracing: BOOLEAN = true
 		-- should it print?
+
+	plot (graph: STRING)
+		do
+			if false then
+
+
+			(create {EXECUTION_ENVIRONMENT}).launch (
+					"echo %"" + graph + "%" | dot -Tpdf | okular - 2>/dev/null"
+				);
+			end
+		end
 
 ;note
 	copyright: "Copyright (c) 1984-2017, Eiffel Software"

@@ -50,6 +50,11 @@ feature {ANY}
 			variables := new_variables
 		end
 
+feature -- TO DELETE
+	out2: STRING
+		deferred
+		end
+
 invariant
 	variables /= Void
 

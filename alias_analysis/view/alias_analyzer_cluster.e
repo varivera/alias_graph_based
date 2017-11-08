@@ -51,12 +51,13 @@ feature {NONE}
 			feature_view.editor.clear_window
 		end
 
-	class_to_analyse (class_: CLASS_C; actual_class_name: STRING)
+	class_to_analyse (class_: CLASS_C; actual_class_name: STRING; getting_values: TUPLE[num_cla, num_feat:INTEGER])
 			-- Apply alias analysis to all features of class `class_'
 		local
 			l_visitor: ALIAS_ANALYSIS_VISITOR
 			routine: PROCEDURE_I
 			i: INTEGER
+			graph_result_file: PLAIN_TEXT_FILE
 		do
 			print ("Analysis%N")
 			from
@@ -69,25 +70,27 @@ feature {NONE}
 					and attached {E_ROUTINE} class_.feature_table.features.at (i).e_feature as r
 					and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as p
 
-					-- July 24th
-					--introduced errors:
-					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "auto_resize")) -- not sure if ok
-					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_copy"))
-					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					then
+						getting_values.num_feat := getting_values.num_feat +1
+						-- progress
+					--and (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse"))
+					--and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend"))
+					--and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "wipe_out"))
+
+					-- July 06th
+					if (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_prepend"))
+
 
 
 					-- TODO: To check out: problem with parameter
 					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "subtree_twin"))
-					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_subtree_twin"))
 					 -- copy calls subtree_twin
 					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
-					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_copy"))
 					 -- calls copy and copy calls subtree_twin
 					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
 					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
-						-- calls V_GENERAL_SORTED_TABLE/copy -> no information about a generic type
+						-- calls V_GENERAL_SORTED_TABLE/copy
 					and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
-					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test2_copy"))
 
 						-- TODO: To solve (EiffelBase2)
 					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
@@ -115,11 +118,6 @@ feature {NONE}
 					and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make"))
 					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make"))
 					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "key_equivalence"))
-
-
-						-- Should we consider:
-						-- if v = Void then do_something else v.w end
-					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "merge"))
 
 						-- ADDRESS_CURRENT_AS -> not supported
 					and (class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code"))
@@ -190,7 +188,6 @@ feature {NONE}
 					and not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out")
 
 				then
-
 					print ("====Feature: ")
 					print (class_.feature_table.features.at (i).e_feature.name_32)
 					print ("==(")
@@ -199,24 +196,44 @@ feature {NONE}
 					io.new_line
 					routine := p
 					if class_.feature_table.features.at (i).e_feature.is_function implies not class_.feature_table.features.at (i).e_feature.type.actual_type.name.starts_with ("MML") then
+						create start_time.make_now_utc
+							-- Initialising time
+
 						create l_visitor.make (routine, Void)
 						routine.body.process (l_visitor)
+						create finish_time.make_now_utc
+							-- taking final time
+						io.new_line
+						print ("time: ")
+						print (finish_time.relative_duration (start_time).fine_seconds_count)
+
 						io.new_line
 						print (l_visitor.alias_graph.to_string)
 						io.new_line
 						print (l_visitor.alias_graph.to_graph)
-						io.new_line;
+						io.new_line
 
-						(create {EXECUTION_ENVIRONMENT}).launch (
-						 "echo %"" + l_visitor.alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
-						)
+							--								(create {EXECUTION_ENVIRONMENT}).launch (
+							--									"echo %"" + l_visitor.alias_graph.to_graph + "%" | dot -Tpdf | okular - 2>/dev/null"
+							--								)
+
+
+						create graph_result_file.make_open_write (graph_result_folder + actual_class_name + "-" + class_.feature_table.features.at (i).e_feature.name_32 + ".dot")
+						graph_result_file.put_string  (l_visitor.alias_graph.to_graph)
+						graph_result_file.close
+
+
+						output_file.put_string  (actual_class_name + "," + class_.feature_table.features.at (i).e_feature.name_32
+												 + "," + finish_time.relative_duration (start_time).fine_seconds_count.out
+												 + ", graphs/" + actual_class_name + "-" + class_.feature_table.features.at (i).e_feature.name_32 + ".png%N")
+
 					end
-				end
+				end end
 				i := i + 1
 			end
 		end
 
-	clusters (c: CLUSTER_I)
+	clusters (c: CLUSTER_I; getting_values: TUPLE[num_cla, num_feat:INTEGER])
 			-- Apply alias analysis to all classes in cluster `c' (including nested
 			-- clusters)
 		local
@@ -231,6 +248,7 @@ feature {NONE}
 			across
 				c.classes as cla
 			loop
+				getting_values.num_cla := getting_values.num_cla +1
 				if not cla.item.actual_class.name.starts_with ("MML_") and not (cla.item.actual_class.name ~ "V_STRING_INPUT") and not (cla.item.actual_class.name ~ "V_DEFAULT") then
 					if System.eiffel_universe.classes_with_name (cla.item.actual_class.name).count = 1 then
 						print ("Class being analysed: ")
@@ -240,7 +258,7 @@ feature {NONE}
 						io.new_line
 						io.new_line
 						class_ := System.eiffel_universe.classes_with_name (cla.item.actual_class.name).first.compiled_class
-						class_to_analyse (class_, cla.item.actual_class.name)
+						class_to_analyse (class_, cla.item.actual_class.name, getting_values)
 					end
 				end
 			end
@@ -250,17 +268,29 @@ feature {NONE}
 				across
 					sc as clu
 				loop
-					clusters (clu.item)
+					clusters (clu.item, getting_values)
 				end
 			end
 		end
 
 	on_stone_changed (a_stone: STONE)
+		local
+			getting_values: TUPLE[num_cla, num_feat:INTEGER]
 		do
+			create getting_values.default_create
+			getting_values.num_cla := 0
+			getting_values.num_feat := 0
+
 			reset
 			print ("%N=================================================================%N")
 			if attached {CLUSTER_STONE} a_stone as fs then
-				clusters (fs.cluster_i)
+				-- new report
+				create output_file.make_open_write (result_file)
+				output_file.put_string  ("class name, feature name, time, graph%N")
+				clusters (fs.cluster_i, getting_values)
+				output_file.close
+				print ("%N%Nn features: " + getting_values.num_feat.out)
+				print ("%N%Nn classes: " + getting_values.num_cla.out)
 			elseif attached {CLASSC_STONE} a_stone as c and then
 				attached {CLASS_C} c.class_i.compiled_class as cla
 			then
@@ -274,11 +304,25 @@ feature {NONE}
 						print (System.eiffel_universe.classes_with_name (cla.name).count)
 						io.new_line
 						io.new_line
-						class_to_analyse (cla, cla.name)
+						class_to_analyse (cla, cla.name, void)
 					end
 				end
 			end
 		end
+
+feature -- Timing and Report
+	start_time: DATE_TIME
+			-- Moment of analysis start.
+
+	finish_time: DATE_TIME
+			-- Moment of analysis start.
+
+	output_file: PLAIN_TEXT_FILE
+			-- file to write down the report
+
+	result_file: STRING = "C:\Users\v.rivera\Dropbox\work\Framing\WorkInProgress\2017\meeting Oct20\results\result.csv"
+
+	graph_result_folder: STRING = "C:\Users\v.rivera\Dropbox\work\Framing\WorkInProgress\2017\meeting Oct20\results\graphs\"
 
 invariant
 	feature_view /= Void

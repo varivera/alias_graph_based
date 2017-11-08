@@ -1,4 +1,3 @@
-
 class
 	ALIAS_GRAPH
 
@@ -21,7 +20,7 @@ feature {NONE}
 			create alias_dyn.make
 			create stack.make
 			stack_push (create {ALIAS_OBJECT}.make (a_routine.written_class.actual_type), a_routine,
-						Void, Void, False, a_routine.access_class.class_id)
+						Void, Void, False)
 			if tracing then
 				print_atts_depth (stack_top.current_object.attributes)
 				print_atts_depth (stack_top.locals)
@@ -41,8 +40,7 @@ feature
 
 	stack_push (a_current_object: ALIAS_OBJECT; a_routine: PROCEDURE_I;
 				ent: TWO_WAY_LIST [TWO_WAY_LIST [STRING]];
-				ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]];
-				qualified_call: BOOLEAN; base_class_id: INTEGER)
+				ent_local: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]; qualified_call: BOOLEAN)
 			-- adds a context `a_routine' to the ALIAS_GRAPH having a ref to `a_current_object'
 			--  routine `a_routine' was called from entity `ent' in `qualified_call'
 		local
@@ -122,9 +120,21 @@ feature
 					print (l_local_ent.count)
 				end
 			end
+
+			if tracing then
+				io.new_line
+				print (a_routine.e_feature.name_32)
+			end
+
+			-- TODO: this is the case where the routine was already created
 			stack.extend (create {ALIAS_ROUTINE}.make (
-						a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]}.make (16),
-						l_ent, l_local_ent, base_class_id))
+						a_current_object, a_routine,
+						locals_alias_object (a_routine),
+						l_ent, l_local_ent))
+
+--			stack.extend (create {ALIAS_ROUTINE}.make (
+--						a_current_object, a_routine, create {HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]}.make (16),
+--						l_ent, l_local_ent))
 
 			if tracing then
 					print ("%N==============%N")
@@ -152,7 +162,11 @@ feature
 			if qualified_call or stack.count = 1 then
 				update_class_atts_routine (a_routine)
 			end
-			update_feat_signature (a_routine)
+
+			if not hard_coded then
+				update_feat_signature (a_routine)
+			end
+
 
 			if tracing then
 					print ("%N==============%N")
@@ -178,8 +192,8 @@ feature
 		end
 
 	update_class_atts_routine (a_routine: PROCEDURE_I)
-			-- updates, in the graph, the class attributes in which `a_routine' is.
-			-- It adds a Void reference to those detachable references.
+			-- updates, in the graph, the class attributes in which `a_routine' is
+			-- it adds a Void reference to those detachable references.
 		do
 			update_class_atts (a_routine.access_class, stack_top.current_object.attributes)
 		end
@@ -206,6 +220,7 @@ feature
 					obj_vars.force (l_obj, create {ALIAS_KEY}.make (const.item.name_32))
 				end
 			end
+
 			across
 				a_class.skeleton as att
 			loop
@@ -214,18 +229,18 @@ feature
 					io.new_line
 				end
 				if not obj_vars.has (create {ALIAS_KEY}.make (att.item.attribute_name)) then
-						-- to retrieve their types and to add them to the stack
-					create l_obj.make
-					l_obj.force (create {ALIAS_OBJECT}.make (att.item.type_i))
-					obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
-
-						-- if the class attribute is declared as detachable an additional
-						--	type is added: Void. detachable can be either Void or be attached to
-						--	some specific type
 					if att.item.type_i.has_detachable_mark then
 							-- to retrieve their types and to add them to the stack
-						obj_vars.at (create {ALIAS_KEY}.make (att.item.attribute_name)).force (create {ALIAS_OBJECT}.make_void)
+						create l_obj.make
+						l_obj.force (create {ALIAS_OBJECT}.make_void)
+						obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
+					else
+							-- to retrieve their types and to add them to the stack
+						create l_obj.make
+						l_obj.force (create {ALIAS_OBJECT}.make (att.item.type_i))
+						obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
 					end
+
 				end
 			end
 		end
@@ -248,14 +263,6 @@ feature
 						create l_obj.make
 						l_obj.force (create {ALIAS_OBJECT}.make (type))
 						stack_top.locals.force (l_obj, create {ALIAS_KEY}.make (args_names.at (i)))
-
-							-- if the argument is declared as detachable an additional
-							--	type is added: Void. detachable can be either Void or be attached to
-							--	some specific type
-						if args.at (i).has_detachable_mark then
-								-- to retrieve their types and to add them to the stack
-							stack_top.locals.at (create {ALIAS_KEY}.make (args_names.at (i))).force (create {ALIAS_OBJECT}.make_void)
-						end
 					end
 					i := i + 1
 				end
@@ -267,16 +274,6 @@ feature
 					create l_obj.make
 					l_obj.force (create {ALIAS_OBJECT}.make (type))
 						stack_top.locals.force (l_obj, create {ALIAS_KEY}.make ("Result"))
-
-
-						-- if the return value is declared as detachable an additional
-						--	type is added: Void. detachable can be either Void or be attached to
-						--	some specific type
-					if type.has_detachable_mark then
-							-- to retrieve their types and to add them to the stack
-						stack_top.locals.at (create {ALIAS_KEY}.make ("Result")).force (create {ALIAS_OBJECT}.make_void)
-					end
-
 				else
 						-- TODO
 				end
@@ -522,6 +519,15 @@ feature {NONE} -- Computing
 			end
 		end
 
+	info_node (a_cur_node: ALIAS_VISITABLE): STRING
+		do
+			Result := a_cur_node.out
+--			Result := a_cur_node.out2.twin
+--			Result.replace_substring_all ("ALIAS_OBJECT [0x", "")
+--			Result.replace_substring_all ("]", "")
+		end
+
+
 	print_nodes (a_cur_node: ALIAS_VISITABLE;
 	root_n: INTEGER;
 	a_id: CELL [NATURAL_32]; a_output: STRING_8)
@@ -542,11 +548,11 @@ feature {NONE} -- Computing
 				a_id.put (a_id.item + 1)
 				a_cur_node.add_visiting_data ("b" + a_id.item.out)
 				if root_n = 0 then
-					a_output.append ("%T" + a_cur_node.visiting_data.last + "[color=purple label=<" + a_cur_node.out + ">]%N")
+					a_output.append ("%T" + a_cur_node.visiting_data.last + "[color=purple label=<" + info_node (a_cur_node) + ">]%N")
 				elseif root_n = 1 then
-					a_output.append ("%T" + a_cur_node.visiting_data.last + "[color=blue label=<" + a_cur_node.out + ">]%N")
+					a_output.append ("%T" + a_cur_node.visiting_data.last + "[color=blue label=<" + info_node (a_cur_node) + ">]%N")
 				elseif root_n = 2 then
-					a_output.append ("%T" + a_cur_node.visiting_data.last + "[label=<" + a_cur_node.out + ">]%N")
+					a_output.append ("%T" + a_cur_node.visiting_data.last + "[label=<" + info_node (a_cur_node) + ">]%N")
 				end
 				if attached {ALIAS_ROUTINE} a_cur_node as l_ar then
 					--print ("%N"+a_cur_node.out+"%N")
@@ -836,6 +842,10 @@ feature -- Managing Loops
 				alias_loop.set_cond_add (alias_cond.additions)
 			end
 
+			if tracing then
+				alias_loop.set_g (Current)
+			end
+
 			alias_loop.finalising_loop (stack.first, stack_top)
 			alias_loop.set_cond_add (Void)
 		end
@@ -859,7 +869,7 @@ feature -- Managing Loops
 feature -- Managing Recursion
 
 	check_recursive_fix_point (routine_name: STRING)
-			-- checks for fix point reached in a recursive call. It sets variables
+			-- checks for fix point reached in a recursive call. It set variables
 			--	is_recursive_fix_point to True in case of fix point reached and
 			--  rec_last_locals to the locals variables of the last routine
 		local
@@ -902,30 +912,20 @@ feature -- Managing Recursion
 			-- additions and deletions of the previous recursive calls.
 			-- TODO: To improve
 
-	fix_point: INTEGER = 2
+	fix_point: INTEGER = 3
 			-- `n_fixpoint' is a fix number: upper bound for rec
 
-	finalising_recursion (routine_name: STRING)
+	finalising_recursion
 			-- finalises the operations of recursion in case of fix pont
 		require
 			is_recursive_fix_point;
-			(pre_add.count = pre_del.count) and (pre_add.count = 3)
-		local
-			i: INTEGER
+			(pre_add.count = pre_del.count) and (pre_add.count = 4) -- TODO: filter out magic number into constants
 		do
 				-- retrieve additions and deletions
 				-- TODO: should I delete them as well? (additions and deletions of previous calls)
+
+			stack_top.alias_pos_rec.set_g (Current)
 			stack_top.alias_pos_rec.finalising_recursive_call (stack.first, stack_top, pre_add, pre_del)
-			from
-				i := 1
-			until
-				i > fix_point or stack.is_empty
-			loop
-				if stack_top.routine.feature_name_32 ~ routine_name then
-					i := i + 1
-				end
-				stack_pop
-			end
 
 		end
 
@@ -936,6 +936,61 @@ feature -- Managing Recursion
 			-- returns the entities to be added to deletion after a conditional
 		do
 			Result := alias_cond.inter_deletion
+		end
+
+	hard_coded: BOOLEAN
+	locals_alias_object (a_routine: PROCEDURE_I): HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]
+			-- returns alias object of local in routine `a_routine' if the routine was
+			-- already visited. Void otherwise
+		local
+			i: INTEGER
+		do
+			hard_coded := False
+			create Result.make (16)
+			if stack.count >= 1 then
+				from
+					stack.finish
+					if tracing then
+						io.new_line
+						print (stack.before)
+						io.new_line
+						print (stack.count)
+						io.new_line
+						print (stack.item.routine.e_feature.name_32)
+
+						io.new_line
+						print (a_routine = stack.last.routine)
+						io.new_line
+					end
+				until
+					stack.before or
+					a_routine = stack.last.routine
+				loop
+					stack.back
+					if tracing then
+						io.new_line
+						print (stack.before)
+
+						if not stack.before then
+							io.new_line
+							print (stack.item.routine.e_feature.name_32)
+							io.new_line
+							print (stack.item.routine = stack.last.routine)
+						end
+						io.new_line
+					end
+				end
+				if not stack.before then
+					across
+						stack.item.locals as l
+					loop
+						Result.force (l.item, l.key)
+					end
+
+					hard_coded := True
+--					Result := stack.item.locals
+				end
+			end
 		end
 
 feature -- Managing possible Dyn Bind
@@ -983,10 +1038,10 @@ feature -- Managing possible Dyn Bind
 			end
 			alias_dyn.finalising_dyn_bind (stack.first, stack_top)
 		end
-stack: TWO_WAY_LIST [ALIAS_ROUTINE]
+
 feature {NONE} -- Access
 
-	--stack: TWO_WAY_LIST [ALIAS_ROUTINE]
+	stack: TWO_WAY_LIST [ALIAS_ROUTINE]
 			-- `stack' implements the ALIAS_GRAPH
 
 	alias_cond: ALIAS_COND

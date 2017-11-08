@@ -39,7 +39,20 @@ feature -- Managing recursion
 		do
 			additions := add
 			deletions := del
+
 			if tracing then
+				printing_vars (1)
+			end
+
+			additions.start
+			additions.remove
+			deletions.start
+			deletions.remove
+			if tracing then
+				print (additions.count)
+				io.new_line
+				print (deletions.count)
+				io.new_line
 				printing_vars (1)
 			end
 				-- Merge `other' into current structure after cursor
@@ -47,13 +60,42 @@ feature -- Managing recursion
 			finalising (root, current_routine)
 		end
 
+
 	finalising (root, current_routine: ALIAS_ROUTINE)
+		local
+			output_file: PLAIN_TEXT_FILE -- TODELETE
 		do
+			if tracing then
+				print_atts_depth (current_routine.current_object.attributes)
+				print_atts_depth (current_routine.locals)
+				(create {TRACING}.plot (g.to_graph)).do_nothing
+--				create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+--				output_file.put_string  (g.to_graph)
+--				output_file.close;
+			end
 				-- i. add deleted links
 			add_deleted_links (root, current_routine)
 
+			if tracing then
+				print_atts_depth (current_routine.current_object.attributes)
+				print_atts_depth (current_routine.locals)
+				(create {TRACING}.plot (g.to_graph)).do_nothing
+--				create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+--				output_file.put_string  (g.to_graph)
+--				output_file.close;
+			end
+
 				-- ii. subsume nodes
 			subsume (root)
+
+			if tracing then
+				print_atts_depth (current_routine.current_object.attributes)
+				print_atts_depth (current_routine.locals)
+				(create {TRACING}.plot (g.to_graph)).do_nothing
+--				create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+--				output_file.put_string  (g.to_graph)
+--				output_file.close;
+			end
 		end
 
 	is_in_structure: BOOLEAN
@@ -61,7 +103,7 @@ feature -- Managing recursion
 			Result := True
 		end
 
-feature --	Updating deletions (needed in case of conditionals)
+feature --	Updating deletions
 
 	update_del (to_add_del: HASH_TABLE [TUPLE [name, abs_name, feat_name: STRING;
 							obj: TWO_WAY_LIST [ALIAS_OBJECT];

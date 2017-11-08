@@ -728,20 +728,58 @@ feature -- Managing merging nodes (for loops and recursion)
 			end
 		end
 
+
+	--- DELETE
+	set_g (a_g: ALIAS_GRAPH)
+		do
+			g := a_g
+		end
+	g: ALIAS_GRAPH
+	---
+
 	subsume_nodes (n2, n1: ALIAS_OBJECT; root: ALIAS_ROUTINE)
 			-- subsumes node `n2' by `n1' in the graph
 			-- it comprises 3 steps
 			-- i. for_all i | i \in Nodes and i /= 2 and n_2 -->_t n_i then n_1 -->_t n_i
 			-- ii. for_all i | i \in Nodes and i /= 2 and n_i -->_t n_2 then n_i -->_t n_1
 			-- iii. for_all n_2 -->_t n_2 then n_1 -->_t n_1
+		local
+			output_file: PLAIN_TEXT_FILE -- TODELETE
 		do
+			if tracing then
+				--(create {TRACING}.plot (g.to_graph)).do_nothing
+				reset (root.current_object.attributes)
+				io.new_line
+				print (n1.out2)
+				io.new_line
+				print (n2.out2)
+			end
 			subsume_from_n2 (n2, n1)
 				-- including from n2 to itself
 
 			reset (root.current_object.attributes)
+			if tracing then
+--				create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+--				output_file.put_string  (g.to_graph)
+--				output_file.close;
+				(create {TRACING}.plot (g.to_graph)).do_nothing
+				reset (root.current_object.attributes)
+			end
 			n2.visited := True
 			subsume_to_n2 (root.current_object.attributes, n1, n2)
 			reset (root.current_object.attributes)
+
+			-- Try with locals
+			n2.visited := True
+			subsume_to_n2 (root.locals, n1, n2)
+			reset (root.current_object.attributes)
+
+			if tracing then
+--				create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+--				output_file.put_string  (g.to_graph)
+--				output_file.close;
+				--(create {TRACING}.plot (g.to_graph)).do_nothing
+			end
 		end
 
 	subsume_from_n2 (n2, n1: ALIAS_OBJECT)
@@ -810,6 +848,45 @@ feature -- Managing merging nodes (for loops and recursion)
 				end
 			end
 		end
+
+	-- CHECKING
+--	subsume_to_n2_locals (v: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]; n1, n2: ALIAS_OBJECT)
+--			-- subsumes node `n2' by `n1' in the graph
+--			-- it comprises 1 step (step (ii))
+--			-- (NO) i. for_all i | i \in Nodes and i /= 2 and n_2 -->_t n_i then n_1 -->_t n_i
+--			-- ii. for_all i | i \in Nodes and i /= 2 and n_i -->_t n_2 then n_i -->_t n_1
+--			-- (NO) iii. for_all n_2 -->_t n_2 then n_1 -->_t n_1
+--		require
+--			v /= Void
+--			n2.visited
+--		do
+--			if not v.is_empty then
+--				across
+--					v as values
+--				loop
+--					from
+--						values.item.start
+--					until
+--						values.item.after
+--					loop
+--						if values.item.item = n2 then
+--							if not values.item.has (n1) then
+--								values.item.put_right (n1)
+--							end
+--							values.item.remove
+--						end
+--						if not values.item.after and not values.item.item.visited then
+--							values.item.item.visited := True
+--							asd
+--							subsume_to_n2_locals (values.item.item.attributes, n1, n2)
+--						end
+--						if not values.item.after then
+--							values.item.forth
+--						end
+--					end
+--				end
+--			end
+--		end
 
 	add_deleted_links (root, current_routine: ALIAS_ROUTINE)
 			-- restore the graph by given back the deleted links
