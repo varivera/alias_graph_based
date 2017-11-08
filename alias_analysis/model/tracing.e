@@ -7,15 +7,22 @@ feature
 		-- should it print?
 
 	plot (graph: STRING)
+		local
+			output_file: PLAIN_TEXT_FILE
 		do
-			if false then
+			if true then
+			create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+			output_file.put_string  (graph)
+			output_file.close;
 
-
-			(create {EXECUTION_ENVIRONMENT}).launch (
-					"echo %"" + graph + "%" | dot -Tpdf | okular - 2>/dev/null"
-				);
+--			(create {EXECUTION_ENVIRONMENT}).launch (
+--					"echo %"" + graph + "%" | dot -Tpdf | okular - 2>/dev/null"
+--				);
 			end
 		end
+
+
+
 
 ;note
 	copyright: "Copyright (c) 1984-2017, Eiffel Software"

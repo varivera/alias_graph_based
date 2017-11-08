@@ -19,7 +19,7 @@ feature {NONE}
 			create alias_loop.make
 			create alias_dyn.make
 			create stack.make
-			stack_push (create {ALIAS_OBJECT}.make (a_routine.written_class.actual_type), a_routine,
+			stack_push (create {ALIAS_OBJECT}.make (a_routine.written_class.actual_type, false), a_routine,
 						Void, Void, False)
 			if tracing then
 				print_atts_depth (stack_top.current_object.attributes)
@@ -216,7 +216,7 @@ feature
 				if not obj_vars.has (create {ALIAS_KEY}.make (const.item.name_32)) then
 						-- to retrieve their types and to add them to the stack
 					create l_obj.make
-					l_obj.force (create {ALIAS_OBJECT}.make (const.item.type))
+					l_obj.force (create {ALIAS_OBJECT}.make (const.item.type, false))
 					obj_vars.force (l_obj, create {ALIAS_KEY}.make (const.item.name_32))
 				end
 			end
@@ -237,7 +237,7 @@ feature
 					else
 							-- to retrieve their types and to add them to the stack
 						create l_obj.make
-						l_obj.force (create {ALIAS_OBJECT}.make (att.item.type_i))
+						l_obj.force (create {ALIAS_OBJECT}.make (att.item.type_i, false))
 						obj_vars.force (l_obj, create {ALIAS_KEY}.make (att.item.attribute_name))
 					end
 
@@ -261,7 +261,7 @@ feature
 				loop
 					if attached args.at (i) as type then
 						create l_obj.make
-						l_obj.force (create {ALIAS_OBJECT}.make (type))
+						l_obj.force (create {ALIAS_OBJECT}.make (type, true))
 						stack_top.locals.force (l_obj, create {ALIAS_KEY}.make (args_names.at (i)))
 					end
 					i := i + 1
@@ -272,7 +272,7 @@ feature
 			if a_routine.e_feature.has_return_value then
 				if attached a_routine.e_feature.type as type then
 					create l_obj.make
-					l_obj.force (create {ALIAS_OBJECT}.make (type))
+					l_obj.force (create {ALIAS_OBJECT}.make (type, false))
 						stack_top.locals.force (l_obj, create {ALIAS_KEY}.make ("Result"))
 				else
 						-- TODO
@@ -521,10 +521,10 @@ feature {NONE} -- Computing
 
 	info_node (a_cur_node: ALIAS_VISITABLE): STRING
 		do
-			Result := a_cur_node.out
---			Result := a_cur_node.out2.twin
---			Result.replace_substring_all ("ALIAS_OBJECT [0x", "")
---			Result.replace_substring_all ("]", "")
+--			Result := a_cur_node.out
+			Result := a_cur_node.out2.twin
+			Result.replace_substring_all ("ALIAS_OBJECT [0x", "")
+			Result.replace_substring_all ("]", "")
 		end
 
 

@@ -122,7 +122,7 @@ feature {ANY}
 				a_alias_object.start
 				if a_alias_object.item.type.is_expanded then
 					create l_obj.make
-					l_obj.force (create {ALIAS_OBJECT}.make (a_alias_object.item.type))
+					l_obj.force (create {ALIAS_OBJECT}.make (a_alias_object.item.type, false))
 					alias_object := l_obj
 					variable_map [create {ALIAS_KEY}.make (variable_name)] := alias_object
 						--				across

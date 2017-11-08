@@ -753,6 +753,10 @@ feature -- Managing merging nodes (for loops and recursion)
 				print (n1.out2)
 				io.new_line
 				print (n2.out2)
+				io.new_line
+				print (n1.is_param)
+				io.new_line
+				print (n2.is_param)
 			end
 			subsume_from_n2 (n2, n1)
 				-- including from n2 to itself
@@ -771,6 +775,18 @@ feature -- Managing merging nodes (for loops and recursion)
 
 			-- Try with locals
 			n2.visited := True
+			if tracing then
+				--(create {TRACING}.plot (g.to_graph)).do_nothing
+				reset (root.current_object.attributes)
+				io.new_line
+				print (n1.out2)
+				io.new_line
+				print (n2.out2)
+				io.new_line
+				print (n1.is_param)
+				io.new_line
+				print (n2.is_param)
+			end
 			subsume_to_n2 (root.locals, n1, n2)
 			reset (root.current_object.attributes)
 

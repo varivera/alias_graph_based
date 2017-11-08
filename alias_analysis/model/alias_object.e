@@ -13,7 +13,7 @@ create
 
 feature {NONE}
 
-	make (a_type: TYPE_A)
+	make (a_type: TYPE_A; param: BOOLEAN)
 		require
 			a_type /= Void
 		local
@@ -30,11 +30,12 @@ feature {NONE}
 					-- 'items' is a (non-existing) attribute of class SPECIAL to represent
 					-- all fields of the Array
 				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (a_type.system.any_class.compiled_class.class_id)))
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (a_type.system.any_class.compiled_class.class_id), false))
 				attributes.force (l_obj, create {ALIAS_KEY}.make ("items"))
 			end
 			create entity.make
 			create entity_locals.make
+			is_param := param
 		ensure
 			type = a_type
 			attributes /= Void
@@ -81,6 +82,10 @@ feature {ANY}
 
 	entity_locals: TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]
 			-- contains the locals for each entity in `entity' (in case of need)
+
+
+	is_param: BOOLEAN
+		-- -is this Current ALIAS_OBJECT representing a Parameter?
 feature {ANY}
 
 	add_entity (name: TWO_WAY_LIST [STRING]; l: HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY])
