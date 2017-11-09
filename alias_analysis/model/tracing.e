@@ -3,7 +3,7 @@ class
 create
 	plot
 feature
-	tracing: BOOLEAN = false
+	tracing: BOOLEAN = true
 		-- should it print?
 
 	plot (graph: STRING)

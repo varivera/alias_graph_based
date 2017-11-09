@@ -24,8 +24,13 @@ feature
 			l_test_suite: ALIAS_ANALYZER_TEST_SUITE
 			l_ast_viewer: ALIAS_ANALYZER_AST_VIEWER
 			l_cluster_analyser: ALIAS_ANALYZER_CLUSTER
+			l_mq_analyser: MQ_ANALYZER
 		do
 			create Result
+
+			create l_mq_analyser.make (develop_window)
+			Result.extend (l_mq_analyser)
+			Result.set_item_text (l_mq_analyser, "MQ Analyser")
 
 			create l_gui.make (develop_window)
 			Result.extend (l_gui)
@@ -43,6 +48,7 @@ feature
 			create l_cluster_analyser.make (develop_window)
 			Result.extend (l_cluster_analyser)
 			Result.set_item_text (l_cluster_analyser, "Cluster Analyser")
+
 		end
 
 feature {NONE}

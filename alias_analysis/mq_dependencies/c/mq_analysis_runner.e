@@ -1,12 +1,12 @@
 note
-	description: "The alias analysis runner/controller."
+	description: "The mq analysis runner/controller."
 	legal: "See notice at end of class."
 	status: "See notice at end of class."
 	date: "$Date: 2015-11-19 18:10:50 +0300 (Thu, 19 Nov 2015) $"
 	revision: "$Revision: 98119 $"
 
 class
-	ALIAS_ANALYSIS_RUNNER
+	MQ_ANALYSIS_RUNNER
 
 create
 	make
@@ -78,14 +78,14 @@ feature
 
 	step_end
 		local
-			l_visitor: ALIAS_ANALYSIS_VISITOR
+			l_visitor: MQ_ANALYSIS_VISITOR
 		do
 			as_string := "[No report taken?!]"
 			as_graph := ""
 			create l_visitor.make (routine, Void)
 			routine.body.process (l_visitor)
-			as_string := l_visitor.alias_graph.to_string
-			as_graph := l_visitor.alias_graph.to_graph
+			--as_string := l_visitor.alias_graph.to_string
+			--as_graph := l_visitor.alias_graph.to_graph
 			if breakpoints /= Void then
 				gui_refresh_agent.call
 			end
@@ -97,7 +97,7 @@ feature
 			a_index >= index
 			a_index <= routine.number_of_breakpoint_slots
 		local
-			l_visitor: ALIAS_ANALYSIS_VISITOR
+			l_visitor: MQ_ANALYSIS_VISITOR
 		do
 			if breakpoints /= Void then
 				breakpoints [index].active := False
@@ -108,18 +108,18 @@ feature
 			if index = routine.number_of_breakpoint_slots then
 				create l_visitor.make (routine, Void)
 				routine.body.process (l_visitor)
-				as_string := l_visitor.alias_graph.to_string
-				as_graph := l_visitor.alias_graph.to_graph
+				--as_string := l_visitor.alias_graph.to_string
+				--as_graph := l_visitor.alias_graph.to_graph
 			else
-				create l_visitor.make (routine, agent  (ag_node: AST_EIFFEL; ag_alias_graph: ALIAS_GRAPH)
+				create l_visitor.make (routine, agent  (ag_node: AST_EIFFEL; ag_alias_graph: MQ_LIST)
 					do
 						if ag_node.breakpoint_slot = 0 then
 							(create {ETR_BP_SLOT_INITIALIZER}).init_with_context (routine.e_feature.ast, routine.written_class)
 						end
 						if index = ag_node.breakpoint_slot then
 								--Io.put_string ("Taking report before " + ag_node.generator + " (slot " + index.out + ").%N")
-							as_string := ag_alias_graph.to_string
-							as_graph := ag_alias_graph.to_graph
+--							as_string := ag_alias_graph.to_string
+--							as_graph := ag_alias_graph.to_graph
 						end
 					end)
 				routine.body.process (l_visitor)
