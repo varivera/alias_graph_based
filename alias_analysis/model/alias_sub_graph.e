@@ -727,9 +727,7 @@ feature -- Managing merging nodes (for loops and recursion)
 						across
 							additions.at (additions.count - 1).at (added.key).obj as n1
 						loop
---							if is_n2_param (added.key.name, current_routine) then
 								subsume_nodes (added.key.name, n2.item, n1.item, root, current_routine)
---							end
 						end
 					end
 				else
@@ -794,10 +792,10 @@ feature -- Managing merging nodes (for loops and recursion)
 				print (n2.out2)
 			end
 			n2.visited := True
---			if is_n2_param (n2_entity_name, current_routine) then
---				subsume_to_n2 (root.locals, n1, n2)
---				reset (root.current_object.attributes)
---			end
+			if is_n2_param (n2_entity_name, current_routine) then
+				subsume_to_n2 (root.locals, n1, n2)
+				reset (root.current_object.attributes)
+			end
 
 
 			if tracing then
