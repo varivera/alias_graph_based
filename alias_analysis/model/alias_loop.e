@@ -56,7 +56,7 @@ feature -- Managing Loop Iterations
 				deletions.remove
 			end
 
-			
+
 				-- i. add deleted links
 			add_deleted_links (root, current_routine)
 
@@ -72,7 +72,7 @@ feature -- Managing Loop Iterations
 				-- ii. subsume nodes (if any): subsume(n1, n2) (n2 will become n1)
 			if fixpoint_reached = 3 then
 					-- Subsuming corresponding nodes
-				subsume (root)
+				subsume (root, current_routine)
 				if tracing then
 					if attached (create {TRACING}.plot (g.to_graph)) then
 

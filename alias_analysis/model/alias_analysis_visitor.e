@@ -212,7 +212,7 @@ feature {NONE}
 					create old_object.make_object (objects)
 				end
 				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (l_target.type, false))
+				l_obj.force (create {ALIAS_OBJECT}.make (l_target.type))
 				l_target.alias_object := l_obj
 				if alias_graph.is_conditional_branch then
 						--alias_graph.forget_att (l_target)
@@ -396,19 +396,19 @@ feature {NONE} -- utilities
 				create Result.make_object (l_obj)
 			elseif attached {STRING_AS} a_node as l_node then
 				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.string_8_class.compiled_class.class_id), false))
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.string_8_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
 			elseif attached {CHAR_AS} a_node as l_node then
 				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.character_8_class.compiled_class.class_id), false))
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.character_8_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
 			elseif attached {INTEGER_AS} a_node or attached {BIN_PLUS_AS} a_node then
 				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.integer_32_class.compiled_class.class_id), false))
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.integer_32_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
 			elseif attached {BOOL_AS} a_node or attached {UN_NOT_AS} a_node or attached {BIN_OR_AS} a_node or attached {BIN_AND_AS} a_node or attached {BIN_EQ_AS} a_node or attached {BIN_TILDE_AS} a_node or attached {BIN_AND_THEN_AS} a_node or attached {BIN_OR_ELSE_AS} a_node then
 				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.boolean_class.compiled_class.class_id), false))
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.boolean_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
 			elseif attached {CURRENT_AS} a_node as l_node then
 				create l_obj.make
@@ -417,7 +417,7 @@ feature {NONE} -- utilities
 			elseif attached {CREATE_CREATION_EXPR_AS} a_node as l_node then
 				if attached {CLASS_TYPE_AS} l_node.type as l_type and then attached System.eiffel_universe.classes_with_name (l_type.class_name.name_8) as l_classes and then l_classes.count = 1 then
 					create l_obj.make
-					l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_classes.first.compiled_class.class_id), false))
+					l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_classes.first.compiled_class.class_id)))
 					create Result.make_object (l_obj)
 				end
 			elseif attached {RESULT_AS} a_node as l_node then
@@ -427,7 +427,7 @@ feature {NONE} -- utilities
 						-- check is l_node.is_local is already created in the graph
 					if not alias_graph.stack_top.locals.has (create {ALIAS_KEY}.make (l_node.access_name_32)) then
 						create l_obj.make
-						l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_node.class_id), l_node.is_argument))
+						l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_node.class_id)))
 						alias_graph.stack_top.locals.force (l_obj, create {ALIAS_KEY}.make (l_node.access_name_32))
 					end
 					create Result.make_variable (alias_graph.stack_top.routine, alias_graph.stack_top.locals, l_node.access_name_8)
@@ -457,13 +457,13 @@ feature {NONE} -- utilities
 					if l_target.alias_object = Void then
 							-- target doesn't exist yet (e.g. expanded type) -> create
 						create l_obj.make
-						l_obj.force (create {ALIAS_OBJECT}.make (l_target.type, false))
+						l_obj.force (create {ALIAS_OBJECT}.make (l_target.type))
 						l_target.alias_object := l_obj
 					end
 					if attached l_target.alias_object as objs and then objs.count > 0 and then (objs.first.type.is_basic or objs.first.is_string) then
 						if objs.first.type.is_basic and then attached System.eiffel_universe.classes_with_name (objs.first.type.name) as l_classes and then l_classes.count > 0 then
 							create l_obj.make
-							l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_classes.first.compiled_class.class_id), false))
+							l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_classes.first.compiled_class.class_id)))
 							create Result.make_object (l_obj)
 						else
 							create Result.make_object (objs)
@@ -579,7 +579,7 @@ feature {NONE} -- utilities
 					if attached l_target.alias_object as objs and then objs.count > 0 and then objs.first.type.is_basic then
 						if attached System.eiffel_universe.classes_with_name (objs.first.type.name) as l_classes and then l_classes.count > 0 then
 							create l_obj.make
-							l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_classes.first.compiled_class.class_id), false))
+							l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (l_classes.first.compiled_class.class_id)))
 							create Result.make_object (l_obj)
 						end
 					else
@@ -596,7 +596,7 @@ feature {NONE} -- utilities
 					if l_target.alias_object = Void then
 							-- target doesn't exist yet (e.g. expanded type) -> create
 						create l_obj.make
-						l_obj.force (create {ALIAS_OBJECT}.make (l_target.type, false))
+						l_obj.force (create {ALIAS_OBJECT}.make (l_target.type))
 						l_target.alias_object := l_obj
 					end
 					across
@@ -650,7 +650,7 @@ feature {NONE} -- utilities
 						if l_routine.e_feature.name_32 ~ "default_value" and across System.eiffel_universe.classes_with_name ("V_DEFAULT") as ancestor some System.class_of_id (l_node.class_id).inherits_from (ancestor.item.compiled_class) end then
 							if attached l_routine.e_feature.type as type then
 								create l_obj.make
-								l_obj.force (create {ALIAS_OBJECT}.make (type, false))
+								l_obj.force (create {ALIAS_OBJECT}.make (type))
 								create Result.make_object (l_obj)
 							else
 									-- TODO
@@ -686,7 +686,7 @@ feature {NONE} -- utilities
 			elseif attached {TYPE_EXPR_AS} a_node as l_node then
 				stop (7)
 				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.type_class.compiled_class.class_id), false))
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.type_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
 					-- Note (17.2.17) No need to call get_alias_info (a_target, l_node.type)
 			elseif attached {CLASS_TYPE_AS} a_node as l_node then
@@ -722,14 +722,14 @@ feature {NONE} -- utilities
 			if a_routine.e_feature.name_32 ~ "default_value" and across System.eiffel_universe.classes_with_name ("V_DEFAULT") as ancestor some System.class_of_id (a_class_id).inherits_from (ancestor.item.compiled_class) end then
 				if attached a_routine.e_feature.type as type then
 					create l_obj.make
-					l_obj.force (create {ALIAS_OBJECT}.make (type, false))
+					l_obj.force (create {ALIAS_OBJECT}.make (type))
 					create Result.make_object (l_obj)
 				else
 						-- TODO
 				end
 			elseif a_routine.e_feature.name_32 ~ "hash_code" and across System.eiffel_universe.classes_with_name ("V_REFERENCE_HASHABLE") as ancestor some System.class_of_id (a_class_id).inherits_from (ancestor.item.compiled_class) end then
 				create l_obj.make
-				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.integer_32_class.compiled_class.class_id), false))
+				l_obj.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.integer_32_class.compiled_class.class_id)))
 				create Result.make_object (l_obj)
 			elseif a_routine.e_feature.name_32 ~ "print" then
 					--create Result.make_void
@@ -855,6 +855,65 @@ feature {NONE} -- utilities
 				-- before making the call: check if recursion, if so, check for Fix Point
 			alias_graph.check_recursive_fix_point (a_routine.feature_name_32)
 			if alias_graph.is_recursive_fix_point then
+
+
+
+				-------------------------
+
+				create l_params.make
+				if a_params /= Void then
+					across
+						a_params as c
+					loop
+						if attached a_target as target then
+							create tmp_entity.make
+							create ent_local.make
+							across
+								target.entity as ent
+							loop
+								tmp_entity.force (ent.item)
+							end
+							across
+								target.entity_locals as l
+							loop
+								ent_local.force (l.item)
+							end
+							target.entity_wipe_out
+						end
+						l_params.extend (get_alias_info (Void, c.item))
+
+						if attached a_target as target then
+							target.entity_wipe_out
+							across
+								1 |..| tmp_entity.count as i
+							loop
+								target.add_entity (tmp_entity.at (i.item), ent_local.at (i.item))
+							end
+						end
+					end
+				end
+					--				if a_target /= Void then
+					--						-- qualified call
+					--					create ent_local.make
+					--					ent_local.force (alias_graph.stack_top.locals)
+					--				end
+
+				across
+					l_params as c
+				loop
+					create formal_param.make_variable (alias_graph.stack_top.routine, alias_graph.stack_top.locals, a_routine.arguments.item_name (c.target_index))
+
+					if not attached formal_param.alias_object or else (attached formal_param.alias_object as target and then not target.first.type.is_expanded) then
+							-- updating sets Additions and Deletions used to restore the Graph after recursion
+						stop (12)
+						alias_graph.updating_graph (formal_param, c.item)
+					end
+
+				end
+
+				-------------------------
+
+
 					-- add parameters' links to the graph
 				alias_graph.finalising_recursion
 				create Result.make_variable (alias_graph.stack_top.routine, alias_graph.rec_last_locals, "Result")
@@ -880,6 +939,7 @@ feature {NONE} -- utilities
 							target.entity_wipe_out
 						end
 						l_params.extend (get_alias_info (Void, c.item))
+						
 						if attached a_target as target then
 							target.entity_wipe_out
 							across
@@ -895,11 +955,6 @@ feature {NONE} -- utilities
 					--					create ent_local.make
 					--					ent_local.force (alias_graph.stack_top.locals)
 					--				end
-				alias_graph.stack_push (if a_target /= Void then a_target else alias_graph.stack_top.current_object end,
-										a_routine,
-										if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
-										if a_target /= Void then a_target.entity_locals else create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make end,
-										a_target /= Void)
 
 				across
 					l_params as c
@@ -911,11 +966,27 @@ feature {NONE} -- utilities
 						stop (12)
 						alias_graph.updating_graph (formal_param, c.item)
 					end
+
+				end
+
+				alias_graph.stack_push (if a_target /= Void then a_target else alias_graph.stack_top.current_object end,
+										a_routine,
+										if a_target /= Void then a_target.entity else create {TWO_WAY_LIST [TWO_WAY_LIST [STRING]]}.make end,
+										if a_target /= Void then a_target.entity_locals else create {TWO_WAY_LIST [HASH_TABLE [TWO_WAY_LIST [ALIAS_OBJECT], ALIAS_KEY]]}.make end,
+										a_target /= Void)
+
+
+				across
+					l_params as c
+				loop
 					-- TODO: create a new one only if it does not exist. Otherwise, create a ALIAS_OBJECT_INFO from the existing one
 					--alias_object_parm (a_routine.arguments.item_name (c.target_index)).alias_object := c.item.alias_object
 					(create {ALIAS_OBJECT_INFO}.make_variable (alias_graph.stack_top.routine, alias_graph.stack_top.locals, a_routine.arguments.item_name (c.target_index))).alias_object := c.item.alias_object
 
 				end
+
+
+
 
 					--				across
 					--					l_params as c
@@ -1004,7 +1075,7 @@ feature {NONE} -- utilities
 							-- TODO: there is a problem when attached {FORMAL_A} a_target.type. there is not information about the generic class
 						alias_graph.update_class_atts (a_target.type.base_class, a_target.attributes)
 						alias_graph.stack_top.locals.force (create {TWO_WAY_LIST [ALIAS_OBJECT]}.make, create {ALIAS_KEY}.make ("Result"))
-						create objs.make (a_target.type, false)
+						create objs.make (a_target.type)
 						across
 							a_target.attributes as vars
 						loop
@@ -1106,7 +1177,7 @@ feature {NONE} -- utilities
 				end
 			else
 				if alias_b ~ "{T}.default" then
-					source.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.any_class.compiled_class.class_id), false))
+					source.force (create {ALIAS_OBJECT}.make (create {CL_TYPE_A}.make (System.any_class.compiled_class.class_id)))
 				else
 					if alias_graph.stack_top.current_object.attributes.has (create {ALIAS_KEY}.make (path.first)) then
 						collect_objects_external (alias_graph.stack_top.current_object.attributes, source, path, 1)
@@ -1196,7 +1267,7 @@ feature {NONE} -- utilities
 					else -- create
 						type := graph.at (val).first.type
 						graph.at (val).wipe_out
-						graph.at (val).force (create {ALIAS_OBJECT}.make (type, false))
+						graph.at (val).force (create {ALIAS_OBJECT}.make (type))
 						across
 							graph as g
 						loop

@@ -44,16 +44,27 @@ feature -- Managing recursion
 				printing_vars (1)
 			end
 
-			additions.start
-			additions.remove
-			deletions.start
-			deletions.remove
+			--additions.start
+--			additions.finish
+--			additions.remove
+--			deletions.finish
+--			deletions.remove
 			if tracing then
 				print (additions.count)
 				io.new_line
 				print (deletions.count)
 				io.new_line
 				printing_vars (1)
+				io.new_line
+				print (current_routine.routine.e_feature.name_32)
+				io.new_line
+				print (current_routine.routine.e_feature.locals_count)
+				across
+					current_routine.routine.e_feature.argument_names as d
+				loop
+					io.new_line
+					print (d.item)
+				end
 			end
 				-- Merge `other' into current structure after cursor
 				-- position. Do not move cursor. Empty `other'.
@@ -86,7 +97,7 @@ feature -- Managing recursion
 			end
 
 				-- ii. subsume nodes
-			subsume (root)
+			subsume (root, current_routine)
 
 			if tracing then
 				print_atts_depth (current_routine.current_object.attributes)

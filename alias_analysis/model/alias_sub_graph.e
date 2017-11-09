@@ -253,6 +253,15 @@ feature -- Updating
 			end
 			tup.obj := obj
 			--if target_name ~ "Result" then
+
+			if tracing then
+				stop2 (4555)
+				io.new_line
+				print (deletions.count)
+				io.new_line
+				print (additions.count)
+			end
+
 			if local_var_target then
 				deletions.last.force (tup, create {ALIAS_KEY}.make (routine_name + target_name))
 			else
@@ -689,7 +698,7 @@ feature -- Managing Branches
 
 feature -- Managing merging nodes (for loops and recursion)
 
-	subsume (root: ALIAS_ROUTINE)
+	subsume (root, current_routine: ALIAS_ROUTINE)
 			-- subsumes nodes if needed
 		do
 			if tracing then
@@ -718,7 +727,9 @@ feature -- Managing merging nodes (for loops and recursion)
 						across
 							additions.at (additions.count - 1).at (added.key).obj as n1
 						loop
-							subsume_nodes (n2.item, n1.item, root)
+--							if is_n2_param (added.key.name, current_routine) then
+								subsume_nodes (added.key.name, n2.item, n1.item, root, current_routine)
+--							end
 						end
 					end
 				else
@@ -737,7 +748,7 @@ feature -- Managing merging nodes (for loops and recursion)
 	g: ALIAS_GRAPH
 	---
 
-	subsume_nodes (n2, n1: ALIAS_OBJECT; root: ALIAS_ROUTINE)
+	subsume_nodes (n2_entity_name: STRING; n2, n1: ALIAS_OBJECT; root, current_routine: ALIAS_ROUTINE)
 			-- subsumes node `n2' by `n1' in the graph
 			-- it comprises 3 steps
 			-- i. for_all i | i \in Nodes and i /= 2 and n_2 -->_t n_i then n_1 -->_t n_i
@@ -747,16 +758,13 @@ feature -- Managing merging nodes (for loops and recursion)
 			output_file: PLAIN_TEXT_FILE -- TODELETE
 		do
 			if tracing then
-				--(create {TRACING}.plot (g.to_graph)).do_nothing
-				reset (root.current_object.attributes)
 				io.new_line
 				print (n1.out2)
 				io.new_line
 				print (n2.out2)
-				io.new_line
-				print (n1.is_param)
-				io.new_line
-				print (n2.is_param)
+				io.new_line;
+				(create {TRACING}.plot (g.to_graph)).do_nothing
+				reset (root.current_object.attributes)
 			end
 			subsume_from_n2 (n2, n1)
 				-- including from n2 to itself
@@ -773,22 +781,24 @@ feature -- Managing merging nodes (for loops and recursion)
 			subsume_to_n2 (root.current_object.attributes, n1, n2)
 			reset (root.current_object.attributes)
 
-			-- Try with locals
-			n2.visited := True
+				-- parameters can also be subsume (they might represent something from the exterior)
+				-- do it only if n2 is an object that was passed as parameter
+
 			if tracing then
-				--(create {TRACING}.plot (g.to_graph)).do_nothing
+				n2.visited := True
+				(create {TRACING}.plot (g.to_graph)).do_nothing
 				reset (root.current_object.attributes)
 				io.new_line
 				print (n1.out2)
 				io.new_line
 				print (n2.out2)
-				io.new_line
-				print (n1.is_param)
-				io.new_line
-				print (n2.is_param)
 			end
-			subsume_to_n2 (root.locals, n1, n2)
-			reset (root.current_object.attributes)
+			n2.visited := True
+--			if is_n2_param (n2_entity_name, current_routine) then
+--				subsume_to_n2 (root.locals, n1, n2)
+--				reset (root.current_object.attributes)
+--			end
+
 
 			if tracing then
 --				create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
@@ -1020,6 +1030,41 @@ feature -- Managing merging nodes (for loops and recursion)
 --			end
 --		end
 
+
+feature{NONE} -- Helper
+	is_n2_param (n2_entity_name: STRING; current_routine: ALIAS_ROUTINE): BOOLEAN
+			-- cehcks whether `n' is a local entity of `current_routine': locals
+			-- do not play a role is subsuming
+		local
+			name: STRING
+		do
+			name := n2_entity_name.twin
+			name.replace_substring_all (current_routine.routine.e_feature.name_32+"_", "")
+			--if attached current_routine.routine.e_feature as e_feature and then attached e_feature.argument_names as arguments then
+
+			if tracing then
+				print (current_routine.routine.e_feature = Void)
+				io.new_line
+				print (current_routine.routine.e_feature.argument_count)
+				io.new_line
+--				print (current_routine.routine.e_feature.argument_names = Void)
+				io.new_line
+			end
+
+
+			if attached current_routine.routine.e_feature as e_feature and then e_feature.argument_count > 0 then
+				Result :=
+				across
+					--arguments as args
+					e_feature.argument_names as args
+				some
+					name ~ args.item
+				end
+			end
+			--Result := true
+			--
+
+		end
 feature -- Access
 	--TODO: to create a class with this structure
 
