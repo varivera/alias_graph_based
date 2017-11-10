@@ -1,5 +1,10 @@
 note
-	description: "The visitor that computes the MQ list."
+	description: "[
+		The visitor that computes the MQ list.
+			Given a Model Query, this class returns the list of class attributtes related to it
+		This is an initial implementation. It needs to be improved
+		
+	]"
 	legal: "See notice at end of class."
 	status: "See notice at end of class."
 	date: "$Date: 2015-11-20 18:49:14 +0300 (Fri, 20 Nov 2015) $"
@@ -231,8 +236,6 @@ feature {NONE} -- utilities
 			when 0 then
 					-- local variable -> return Void
 			else
-
-				--if attached {PROCEDURE_I} System.class_of_id (a_node.class_id).feature_of_rout_id (a_node.routine_ids.first) as l_r then
 				if attached {PROCEDURE_I} System.class_of_id (class_base_id).feature_of_rout_id (a_node.routine_ids.first) as l_r then
 						-- routine
 					Result := l_r
