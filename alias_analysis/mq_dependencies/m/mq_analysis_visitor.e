@@ -3,7 +3,7 @@ note
 		The visitor that computes the MQ list.
 			Given a Model Query, this class returns the list of class attributtes related to it
 		This is an initial implementation. It needs to be improved
-		
+
 	]"
 	legal: "See notice at end of class."
 	status: "See notice at end of class."
@@ -123,6 +123,7 @@ feature {NONE}
 
 	process_create_creation_as (a_node: CREATE_CREATION_AS)
 		do
+			store_info (a_node.target, false)
 			if attached a_node.call then
 				store_info (a_node.call, true)
 			end
@@ -172,37 +173,26 @@ feature {NONE} -- utilities
 		do
 			if attached {ACCESS_FEAT_AS} a_node as l_node then
 				if l_node.is_local or l_node.is_argument or l_node.is_object_test_local then
-					do_nothing
 						-- we do not care about them
-				elseif is_qualified_call and then find_remote_routine (l_node) as l_routine then
+					do_nothing
+				elseif attached find_routine (l_node, is_qualified_call) as l_routine then
+
+
 					if attached l_node.parameters as params then
+							-- check only the arguments
 						across
 							params as c
 						loop
 							store_info (c.item, false)
 						end
-
-						asd
 					end
-				attached find_routine (l_node) as l_routine then
 						-- routine
-						-- check only the arguments
-
 					if not is_qualified_call then
 						if across calls as c all c.item /~ l_routine.e_feature.name_32 end then
 							calls.force (l_routine.e_feature.name_32)
 							l_routine.body.process (Current)
 						end
 					end
-
-					if attached l_node.parameters as params then
-						across
-							params as c
-						loop
-							store_info (c.item, false)
-						end
-					end
-
 				else
 						-- attribute
 					if not is_qualified_call and then across mq_list as mq all mq.item /~ l_node.access_name_8 end then
@@ -244,7 +234,7 @@ feature {NONE} -- utilities
 			end
 		end
 
-	find_routine (a_node: ID_SET_ACCESSOR): PROCEDURE_I
+	find_routine (a_node: ID_SET_ACCESSOR; is_qualified_call: BOOLEAN): PROCEDURE_I
 			-- finds routine in a_node in class_base_id
 		require
 			a_node /= Void
@@ -253,7 +243,8 @@ feature {NONE} -- utilities
 			when 0 then
 					-- local variable -> return Void
 			else
-				if attached {PROCEDURE_I} System.class_of_id (class_base_id).feature_of_rout_id (a_node.routine_ids.first) as l_r then
+				if attached {PROCEDURE_I} System.class_of_id (
+						if is_qualified_call then a_node.class_id else class_base_id end).feature_of_rout_id (a_node.routine_ids.first) as l_r then
 						-- routine
 					Result := l_r
 				else
@@ -262,23 +253,6 @@ feature {NONE} -- utilities
 			end
 		end
 
-	find_remote_routine (a_node: ID_SET_ACCESSOR): PROCEDURE_I
-			-- finds routine in a_node in class_base_id
-		require
-			a_node /= Void
-		do
-			inspect a_node.routine_ids.count
-			when 0 then
-					-- local variable -> return Void
-			else
-				if attached {PROCEDURE_I} System.class_of_id (a_node.class_id).feature_of_rout_id (a_node.routine_ids.first) as l_r then
-						-- routine
-					Result := l_r
-				else
-						-- attribute -> return Void
-				end
-			end
-		end
 
 invariant
 
