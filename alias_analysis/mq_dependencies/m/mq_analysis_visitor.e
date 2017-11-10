@@ -43,6 +43,7 @@ feature {NONE}
 		do
 			create mq_list.make
 			class_base_id := class_id
+			create calls.make
 		end
 
 feature {ANY}
@@ -52,6 +53,9 @@ feature {ANY}
 
 	class_base_id: INTEGER
 			-- class id
+
+	calls: TWO_WAY_LIST [STRING]
+			-- call feature to handle recursion: this needs to be improved
 
 
 feature {NONE}
@@ -170,12 +174,25 @@ feature {NONE} -- utilities
 				if l_node.is_local or l_node.is_argument or l_node.is_object_test_local then
 					do_nothing
 						-- we do not care about them
-				elseif attached find_routine (l_node) as l_routine then
+				elseif is_qualified_call and then find_remote_routine (l_node) as l_routine then
+					if attached l_node.parameters as params then
+						across
+							params as c
+						loop
+							store_info (c.item, false)
+						end
+
+						asd
+					end
+				attached find_routine (l_node) as l_routine then
 						-- routine
 						-- check only the arguments
 
 					if not is_qualified_call then
-						l_routine.body.process (Current)
+						if across calls as c all c.item /~ l_routine.e_feature.name_32 end then
+							calls.force (l_routine.e_feature.name_32)
+							l_routine.body.process (Current)
+						end
 					end
 
 					if attached l_node.parameters as params then
@@ -188,7 +205,7 @@ feature {NONE} -- utilities
 
 				else
 						-- attribute
-					if across mq_list as mq all mq.item /~ l_node.access_name_8 end then
+					if not is_qualified_call and then across mq_list as mq all mq.item /~ l_node.access_name_8 end then
 						mq_list.force (l_node.access_name_8)
 					end
 
@@ -206,7 +223,7 @@ feature {NONE} -- utilities
 				store_info (l_node.message, true)
 			elseif attached {BINARY_AS} a_node as l_node then
 				store_info (l_node.left, is_qualified_call)
-				store_info (l_node.right, true)
+				store_info (l_node.right, false)
 			elseif attached {BRACKET_AS} a_node as l_node then
 				store_info (l_node.target, is_qualified_call)
 				if attached l_node.operands as params then
@@ -237,6 +254,24 @@ feature {NONE} -- utilities
 					-- local variable -> return Void
 			else
 				if attached {PROCEDURE_I} System.class_of_id (class_base_id).feature_of_rout_id (a_node.routine_ids.first) as l_r then
+						-- routine
+					Result := l_r
+				else
+						-- attribute -> return Void
+				end
+			end
+		end
+
+	find_remote_routine (a_node: ID_SET_ACCESSOR): PROCEDURE_I
+			-- finds routine in a_node in class_base_id
+		require
+			a_node /= Void
+		do
+			inspect a_node.routine_ids.count
+			when 0 then
+					-- local variable -> return Void
+			else
+				if attached {PROCEDURE_I} System.class_of_id (a_node.class_id).feature_of_rout_id (a_node.routine_ids.first) as l_r then
 						-- routine
 					Result := l_r
 				else

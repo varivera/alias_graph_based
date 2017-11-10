@@ -71,7 +71,7 @@ feature {NONE}
 				{ISE_RUNTIME}.check_assert (False).do_nothing
 				feature_view.set_stone (fs)
 				{ISE_RUNTIME}.check_assert (True).do_nothing
-				run_mq_analysis (routine, l_result)
+				run_mq_analysis (routine, routine.access_class.actual_type.class_id, l_result)
 			elseif attached {CLASSC_STONE} a_stone as c and then attached {CLASS_C} c.class_i.compiled_class as cla then
 				if not cla.name.starts_with ("MML_") and not (cla.name ~ "V_STRING_INPUT") and not (cla.name ~ "V_DEFAULT") then
 					if System.eiffel_universe.classes_with_name (cla.name).count = 1 then
@@ -142,7 +142,9 @@ feature {NONE}
 							and then r.is_function and then r.type.actual_type.name.starts_with ("MML")
 							and then not r.is_deferred
 						then
-							run_mq_analysis (routine, a_result)
+							print ("Feature: " +  ii.item.string_value_32 )
+							io.new_line
+							run_mq_analysis (routine, class_.class_id, a_result)
 						end
 
 					end
@@ -152,11 +154,11 @@ feature {NONE}
 
 		end
 
-	run_mq_analysis (routine: PROCEDURE_I; a_result: STRING)
+	run_mq_analysis (routine: PROCEDURE_I; class_id: INTEGER; a_result: STRING)
 		local
 			l_visitor: MQ_ANALYSIS_VISITOR
 		do
-			create l_visitor.make (routine.access_class.actual_type.class_id)
+			create l_visitor.make (class_id)
 			routine.body.process (l_visitor)
 			a_result.append (routine.e_feature.name_32)
 			a_result.append (": [")
@@ -169,6 +171,9 @@ feature {NONE}
 				else
 					a_result.append (", ")
 				end
+			end
+			if l_visitor.mq_list.count = 0 then
+				a_result.append ("]%N")
 			end
 		end
 
