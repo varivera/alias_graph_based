@@ -111,7 +111,7 @@ feature
 				--as_string := l_visitor.alias_graph.to_string
 				--as_graph := l_visitor.alias_graph.to_graph
 			else
-				create l_visitor.make (routine, agent  (ag_node: AST_EIFFEL; ag_alias_graph: MQ_LIST)
+				create l_visitor.make (routine, agent  (ag_node: AST_EIFFEL; mq_list: TWO_WAY_LIST [STRING])
 					do
 						if ag_node.breakpoint_slot = 0 then
 							(create {ETR_BP_SLOT_INITIALIZER}).init_with_context (routine.e_feature.ast, routine.written_class)
