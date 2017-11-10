@@ -19,8 +19,6 @@ feature {NONE}
 	feature_view: EB_ROUTINE_FLAT_FORMATTER
 	mq_info_text: EV_TEXT
 
-	mq_analysis_runner: MQ_ANALYSIS_RUNNER
-
 
 	make (a_develop_window: EB_DEVELOPMENT_WINDOW)
 		local
@@ -49,70 +47,43 @@ feature {NONE}
 		do
 			feature_view.editor.clear_window
 			mq_info_text.set_text ("")
-			mq_analysis_runner := Void
 		end
 
 	on_stone_changed (a_stone: STONE)
 		local
-			l_el: EIFFEL_EDITOR_LINE
-			l_line_number: INTEGER_32
-			l_last: EDITOR_TOKEN_ALIAS_BREAKPOINT
-
-			l_internal: INTERNAL
-			l_field_index: INTEGER_32
-			l_done: BOOLEAN
+			l_visitor: MQ_ANALYSIS_VISITOR
+			l_result: STRING
 		do
 			reset
 			if
 				attached {FEATURE_STONE} a_stone as fs and then
 				attached {E_ROUTINE} fs.e_feature as r and then
-				attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as p
+				attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine
 			then
 				--feature_view.set_stone (a_stone)
 				{ISE_RUNTIME}.check_assert (False).do_nothing
 				feature_view.set_stone (fs)
 				{ISE_RUNTIME}.check_assert (True).do_nothing
 
-				from
-					l_el := feature_view.editor.text_displayed.first_line
-					l_line_number := 1
-				until
-					l_el = Void
+
+				create l_visitor.make (routine.access_class.actual_type.class_id)
+				routine.body.process (l_visitor)
+				l_result := ""
+				l_result := l_result + "["
+				across
+					l_visitor.mq_list as atts
 				loop
-					if
-						attached {EDITOR_TOKEN_BREAKPOINT} l_el.real_first_token as etb and then
-						etb.pebble /= Void
-					then
-						if l_internal = Void then
-							create l_internal
-							from
-								l_field_index := 1
-							until
-								l_done
-							loop
-								if l_internal.field (l_field_index, l_el) = etb then
-									l_done := True
-								else
-									l_field_index := l_field_index + 1
-								end
-							end
-						end
-						create l_last.make_replace (etb, l_line_number, l_last)
-						l_internal.set_reference_field (l_field_index, l_el, l_last)
-					end
-					l_el := l_el.next
-					l_line_number := l_line_number + 1
+					l_result := l_result + "%N"
+					l_result := l_result + atts.item
 				end
-				create mq_analysis_runner.make (
-						p,
-						l_last,
-						agent do feature_view.editor.refresh end
-					)
-
-				mq_analysis_runner.step_end
-
+				l_result := l_result + "]"
+				print (l_result)
+				mq_info_text.set_text (l_result)
 			end
 		end
+
+
+
 
 
 invariant

@@ -939,7 +939,7 @@ feature {NONE} -- utilities
 							target.entity_wipe_out
 						end
 						l_params.extend (get_alias_info (Void, c.item))
-						
+
 						if attached a_target as target then
 							target.entity_wipe_out
 							across
