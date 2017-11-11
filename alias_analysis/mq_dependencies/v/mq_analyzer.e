@@ -135,16 +135,27 @@ feature {NONE}
 					across
 						i.item.index_list as ii
 					loop
+						print (ii.item.string_value_32)
+						io.new_line
+
+						if attached {E_ROUTINE} class_.feature_named_32 (ii.item.string_value_32).e_feature as r
+							and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine then
+							print (r.is_function)
+						end
 						if class_.feature_named_32 (ii.item.string_value_32).is_attribute then
 							a_result.append (ii.item.string_value_32+": "+ii.item.string_value_32+"%N")
 						elseif attached {E_ROUTINE} class_.feature_named_32 (ii.item.string_value_32).e_feature as r
 							and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine
-							and then r.is_function and then r.type.actual_type.name.starts_with ("MML")
-							and then not r.is_deferred
+							and then r.is_function
 						then
-							print ("Feature: " +  ii.item.string_value_32 )
-							io.new_line
-							run_mq_analysis (routine, class_.class_id, a_result)
+							if not r.is_deferred and then r.type.actual_type.name.starts_with ("MML") then
+								print ("Feature: " +  ii.item.string_value_32 )
+								io.new_line
+								run_mq_analysis (routine, class_.class_id, a_result)
+							else
+								a_result.append (r.name_32+": "+r.name_32+"*%N")
+							end
+
 						end
 
 					end

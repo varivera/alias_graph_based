@@ -1,9 +1,8 @@
 note
 	description: "[
-		The visitor that computes the MQ list.
-			Given a Model Query, this class returns the list of class attributtes related to it
-		This is an initial implementation. It needs to be improved
-
+				The visitor that computes the MQ list.
+					Given a Model Query, this class returns the list of class attributtes related to it
+				This is an initial implementation. It needs to be improved
 	]"
 	legal: "See notice at end of class."
 	status: "See notice at end of class."
@@ -27,7 +26,9 @@ inherit
 			process_object_test_as,
 			process_loop_as,
 			process_routine_as,
-			process_access_feat_as
+			process_access_feat_as,
+			process_nested_as,
+			process_current_as
 		end
 
 	SHARED_SERVER
@@ -56,7 +57,6 @@ feature {ANY}
 
 	calls: TWO_WAY_LIST [STRING]
 			-- call feature to handle recursion: this needs to be improved
-
 
 feature {NONE}
 
@@ -91,8 +91,7 @@ feature {NONE}
 				-- Note: no need for MQ Analysis safe_process (l_as.rescue_clause)
 		end
 
-
-		process_access_feat_as (a_node: ACCESS_FEAT_AS)
+	process_access_feat_as (a_node: ACCESS_FEAT_AS)
 		do
 			store_info (a_node, false)
 		end
@@ -107,14 +106,13 @@ feature {NONE}
 		do
 				-- foo.bar := baz  ->  handle as: foo.set_bar(baz)
 			if attached {EXPR_CALL_AS} a_node.target as l_target1 and then -- foo.bar
-				attached {NESTED_AS} l_target1.call as l_target2   -- foo.bar
+				attached {NESTED_AS} l_target1.call as l_target2 -- foo.bar
 			then
-
 				store_info (l_target2.target, false)
 				store_info (a_node.source, true)
 			elseif -- foo [bar] := baz
-					attached {BRACKET_AS} a_node.target as l_target2 then
-
+				attached {BRACKET_AS} a_node.target as l_target2
+			then
 				Io.put_string ("Not yet supported (2): %N")
 			else
 				Io.put_string ("Not yet supported (2): %N")
@@ -164,6 +162,18 @@ feature {NONE}
 			end
 		end
 
+	process_nested_as (a_node: NESTED_AS)
+		do
+			store_info (a_node, false)
+		end
+
+	process_current_as (a_node: CURRENT_AS)
+		do
+			if across mq_list as mq all mq.item /~ "Current" end then
+				mq_list.force ("Current")
+			end
+		end
+
 feature {NONE} -- utilities
 
 	store_info (a_node: AST_EIFFEL; is_qualified_call: BOOLEAN)
@@ -171,13 +181,18 @@ feature {NONE} -- utilities
 		require
 			a_node /= Void
 		do
+			if tracing then
+				print (a_node)
+			end
 			if attached {ACCESS_FEAT_AS} a_node as l_node then
-				if l_node.is_local or l_node.is_argument or l_node.is_object_test_local then
+				if tracing then
+					print (l_node.access_name_32)
+					io.new_line
+				end
+				if l_node.is_local or l_node.is_argument or l_node.is_object_test_local or l_node.is_tuple_access then
 						-- we do not care about them
 					do_nothing
 				elseif attached find_routine (l_node, is_qualified_call) as l_routine then
-
-
 					if attached l_node.parameters as params then
 							-- check only the arguments
 						across
@@ -190,7 +205,11 @@ feature {NONE} -- utilities
 					if not is_qualified_call then
 						if across calls as c all c.item /~ l_routine.e_feature.name_32 end then
 							calls.force (l_routine.e_feature.name_32)
-							l_routine.body.process (Current)
+							if l_routine.is_deferred then
+								mq_list.force (l_node.access_name_8 + "*")
+							else
+								l_routine.body.process (Current)
+							end
 						end
 					end
 				else
@@ -198,7 +217,6 @@ feature {NONE} -- utilities
 					if not is_qualified_call and then across mq_list as mq all mq.item /~ l_node.access_name_8 end then
 						mq_list.force (l_node.access_name_8)
 					end
-
 				end
 			elseif attached {PRECURSOR_AS} a_node as l_node then
 				if attached l_node.parameters as params then
@@ -210,6 +228,12 @@ feature {NONE} -- utilities
 				end
 			elseif attached {NESTED_AS} a_node as l_node then
 				store_info (l_node.target, is_qualified_call)
+				if tracing then
+					print (l_node.target)
+					io.new_line
+					print (l_node.message)
+					io.new_line
+				end
 				store_info (l_node.message, true)
 			elseif attached {BINARY_AS} a_node as l_node then
 				store_info (l_node.left, is_qualified_call)
@@ -243,8 +267,7 @@ feature {NONE} -- utilities
 			when 0 then
 					-- local variable -> return Void
 			else
-				if attached {PROCEDURE_I} System.class_of_id (
-						if is_qualified_call then a_node.class_id else class_base_id end).feature_of_rout_id (a_node.routine_ids.first) as l_r then
+				if attached {PROCEDURE_I} System.class_of_id (if is_qualified_call then a_node.class_id else class_base_id end).feature_of_rout_id (a_node.routine_ids.first) as l_r then
 						-- routine
 					Result := l_r
 				else
@@ -252,7 +275,6 @@ feature {NONE} -- utilities
 				end
 			end
 		end
-
 
 invariant
 
