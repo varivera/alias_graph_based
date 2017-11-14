@@ -25,8 +25,14 @@ feature
 			l_ast_viewer: ALIAS_ANALYZER_AST_VIEWER
 			l_cluster_analyser: ALIAS_ANALYZER_CLUSTER
 			l_mq_analyser: MQ_ANALYZER
+			verification: VERIFICATION_VIEW
 		do
 			create Result
+
+			create verification.make (develop_window)
+			Result.extend (verification)
+			Result.set_item_text (verification, "ALL")
+
 
 			create l_mq_analyser.make (develop_window)
 			Result.extend (l_mq_analyser)

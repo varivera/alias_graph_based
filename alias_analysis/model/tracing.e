@@ -1,30 +1,32 @@
 class
 	TRACING
+
 create
 	plot
+
 feature
+
 	tracing: BOOLEAN = true
-		-- should it print?
+			-- should it print?
+
+	os_v: INTEGER = 2
 
 	plot (graph: STRING)
 		local
 			output_file: PLAIN_TEXT_FILE
 		do
-			if true then
-			create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
-			output_file.put_string  (graph)
-			output_file.close;
-
---			(create {EXECUTION_ENVIRONMENT}).launch (
---					"echo %"" + graph + "%" | dot -Tpdf | okular - 2>/dev/null"
---				);
+			if tracing then
+				if os_v = 1 then
+					create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
+					output_file.put_string (graph)
+					output_file.close;
+				elseif os_v = 2 then
+					(create {EXECUTION_ENVIRONMENT}).launch ("echo %"" + graph + "%" | dot -Tpdf | okular - 2>/dev/null");
+				end
 			end
-		end
+		end;
 
-
-
-
-;note
+note
 	copyright: "Copyright (c) 1984-2017, Eiffel Software"
 	license: "GPL version 2 (see http://www.eiffel.com/licensing/gpl.txt)"
 	licensing_options: "http://www.eiffel.com/licensing"
@@ -55,4 +57,5 @@ feature
 			Website http://www.eiffel.com
 			Customer support http://support.eiffel.com
 		]"
+
 end

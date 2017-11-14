@@ -1,12 +1,12 @@
 note
-	description: "The gui view of the MQ analysis tool."
+	description: "The gui view of all tools."
 	legal: "See notice at end of class."
 	status: "See notice at end of class."
 	date: "$Date: 2015-11-19 18:10:50 +0300 (Thu, 19 Nov 2015) $"
 	revision: "$Revision: 98119 $"
 
 class
-	MQ_ANALYZER
+	VERIFICATION_VIEW
 
 inherit
 
@@ -162,14 +162,6 @@ feature {NONE}
 				end
 			end
 			a_result.append ("%N%N")
-
-			across
-				System.class_of_id (class_.class_id).parents_classes as p
-			loop
-				if p.item.name /~ "ANY" then
-					class_to_analyse (p.item,  p.item.name, a_result)
-				end
-			end
 		end
 
 	run_mq_analysis (routine: PROCEDURE_I; class_id: INTEGER; a_result: STRING)
