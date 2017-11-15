@@ -6,10 +6,10 @@ create
 
 feature
 
-	tracing: BOOLEAN = true
+	tracing: BOOLEAN = false
 			-- should it print?
 
-	os_v: INTEGER = 2
+	os_v: INTEGER = 1
 
 	plot (graph: STRING)
 		local

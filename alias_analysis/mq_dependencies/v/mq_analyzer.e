@@ -59,10 +59,10 @@ feature {NONE}
 
 	on_stone_changed (a_stone: STONE)
 		local
-			l_result: STRING
+			l_result: HASH_TABLE [HASH_TABLE [ TWO_WAY_LIST [STRING], STRING], STRING]
 		do
 			reset
-			l_result := ""
+			create l_result.make (0)
 			print ("%N=================================================================%N")
 			if attached {CLUSTER_STONE} a_stone as fs then
 				clusters (fs.cluster_i, l_result)
@@ -81,10 +81,10 @@ feature {NONE}
 			end
 
 
-			mq_info_text.set_text (l_result)
+			mq_info_text.set_text (to_string (l_result))
 		end
 
-	clusters (c: CLUSTER_I; a_result: STRING)
+	clusters (c: CLUSTER_I; a_result: HASH_TABLE [HASH_TABLE [ TWO_WAY_LIST [STRING], STRING], STRING])
 			-- Apply MQ analysis to all classes in cluster `c' (including nested
 			-- clusters)
 		local
@@ -120,13 +120,14 @@ feature {NONE}
 			end
 		end
 
-	class_to_analyse (class_: CLASS_C; actual_class_name, a_result: STRING)
+	class_to_analyse (class_: CLASS_C; actual_class_name: STRING; a_result: HASH_TABLE [HASH_TABLE [ TWO_WAY_LIST [STRING], STRING], STRING])
 			-- Apply mq analysis to all features of class `class_'
 		do
 			print ("Analysis%N")
-			a_result.append ("Class: ")
-			a_result.append (class_.name)
-			a_result.append ("%N%N")
+
+			if not a_result.has (actual_class_name) then
+				a_result.force (create {HASH_TABLE [ TWO_WAY_LIST [STRING], STRING]}.make (1), actual_class_name)
+			end
 
 			across
 				class_.ast.top_indexes as i
@@ -143,7 +144,15 @@ feature {NONE}
 							print (r.is_function)
 						end
 						if class_.feature_named_32 (ii.item.string_value_32).is_attribute then
-							a_result.append (ii.item.string_value_32+": "+ii.item.string_value_32+"%N")
+
+							if not a_result.has (actual_class_name) then
+								a_result.force (create {HASH_TABLE [ TWO_WAY_LIST [STRING], STRING]}.make (1), actual_class_name)
+								a_result [actual_class_name].force (create {TWO_WAY_LIST [STRING]}.make, ii.item.string_value_32)
+
+							elseif not a_result [actual_class_name].has (ii.item.string_value_32) then
+								a_result [actual_class_name].force (create {TWO_WAY_LIST [STRING]}.make, ii.item.string_value_32)
+							end
+							(a_result [actual_class_name])[ii.item.string_value_32].force (ii.item.string_value_32)
 						elseif attached {E_ROUTINE} class_.feature_named_32 (ii.item.string_value_32).e_feature as r
 							and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine
 							and then r.is_function
@@ -153,7 +162,13 @@ feature {NONE}
 								io.new_line
 								run_mq_analysis (routine, class_.class_id, a_result)
 							else
-								a_result.append (r.name_32+": "+r.name_32+"*%N")
+								if not a_result.has (actual_class_name) then
+									a_result.force (create {HASH_TABLE [ TWO_WAY_LIST [STRING], STRING]}.make (1), actual_class_name)
+									a_result [actual_class_name].force (create {TWO_WAY_LIST [STRING]}.make, r.name_32)
+								elseif not a_result [actual_class_name].has (ii.item.string_value_32) then
+									a_result [actual_class_name].force (create {TWO_WAY_LIST [STRING]}.make, r.name_32)
+								end
+								(a_result [actual_class_name])[r.name_32].force (r.name_32+"*")
 							end
 
 						end
@@ -161,7 +176,6 @@ feature {NONE}
 					end
 				end
 			end
-			a_result.append ("%N%N")
 
 			across
 				System.class_of_id (class_.class_id).parents_classes as p
@@ -172,7 +186,7 @@ feature {NONE}
 			end
 		end
 
-	run_mq_analysis (routine: PROCEDURE_I; class_id: INTEGER; a_result: STRING)
+	run_mq_analysis (routine: PROCEDURE_I; class_id: INTEGER; a_result: HASH_TABLE [HASH_TABLE [ TWO_WAY_LIST [STRING], STRING], STRING])
 		local
 			l_visitor: MQ_ANALYSIS_VISITOR
 				-- for validation purposes: TODELETE
@@ -192,20 +206,52 @@ feature {NONE}
 				io.new_line
 			end
 			print ("==========================%N")
-			a_result.append (routine.e_feature.name_32)
-			a_result.append (": [")
-			across
-				l_visitor.mq_list as atts
-			loop
-				a_result.append (atts.item)
-				if atts.is_last then
-					a_result.append ("]%N")
-				else
-					a_result.append (", ")
+			-- todelete
+			if not a_result.has (routine.access_class.name) then
+				a_result.force (create {HASH_TABLE [ TWO_WAY_LIST [STRING], STRING]}.make (1), routine.access_class.name)
+				a_result [routine.access_class.name].force (l_visitor.mq_list, routine.e_feature.name_32)
+			elseif not a_result [routine.access_class.name].has (routine.e_feature.name_32) then
+				a_result [routine.access_class.name].force (l_visitor.mq_list, routine.e_feature.name_32)
+			else
+				across
+					l_visitor.mq_list as atts
+				loop
+					if not across (a_result [routine.access_class.name])[routine.e_feature.name_32] as i all i.item /~ atts.item end then
+						(a_result [routine.access_class.name])[routine.e_feature.name_32].force (atts.item)
+					end
 				end
 			end
-			if l_visitor.mq_list.count = 0 then
-				a_result.append ("]%N")
+
+		end
+
+	to_string (res: HASH_TABLE [HASH_TABLE [ TWO_WAY_LIST [STRING], STRING], STRING]): STRING
+		do
+			Result := ""
+
+			across
+				res as c
+			loop
+				if c.item.count > 0 then
+					Result := Result + c.key + "%N"
+					across
+						c.item as mq
+					loop
+						if mq.item.count > 0 then
+							Result := Result + "     " + mq.key + ": ["
+							across
+								mq.item as att
+							loop
+								Result := Result + att.item
+								if not att.is_last then
+									Result := Result + ", "
+								else
+									Result := Result + "]"
+								end
+							end
+						end
+					end
+				end
+				Result := Result + "%N"
 			end
 		end
 

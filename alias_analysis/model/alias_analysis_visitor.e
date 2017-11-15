@@ -213,7 +213,11 @@ feature {NONE}
 				end
 				create l_obj.make
 				l_obj.force (create {ALIAS_OBJECT}.make (l_target.type))
+
+
+
 				l_target.alias_object := l_obj
+
 				if alias_graph.is_conditional_branch then
 						--alias_graph.forget_att (l_target)
 					alias_graph.forget_att (l_target, old_object)
@@ -258,6 +262,16 @@ feature {NONE}
 					--						-- deletion
 					--					alias_graph.updating_A_D (l_target.variable_name, l_target.variable_name, old_object, l_obj)
 					--				end
+
+
+				across
+					alias_graph.stack_top.current_object.attributes.current_keys as k
+				loop
+					if k.item.name ~ l_target.variable_name then
+						k.item.set_assigned
+					end
+				end
+
 			else
 				Io.put_string ("Not yet supported (3): " + code (a_node) + "%N")
 			end

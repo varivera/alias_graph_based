@@ -311,12 +311,32 @@ feature
 		do
 			create cur_change.put (False)
 			change_graph (stack.last, create {TWO_WAY_LIST [ALIAS_KEY]}.make, cur_change)
+
 			create Result.make_empty
 			Result.append ("digraph g {%N")
 			Result.append ("%Tnode [shape=box]%N")
 			print_nodes (stack.last, 0, create {CELL [NATURAL_32]}.put (0), Result)
 			print_edges (stack.last, Result, cur_change)
 			Result.append ("}%N")
+		end
+
+	change_atts: TWO_WAY_LIST [STRING_8]
+			-- Returns the set of attributes being changed (ignoring remote attributes)
+		local
+			cur_change: CELL [BOOLEAN]
+		do
+			create cur_change.put (False)
+			change_graph (stack.last, create {TWO_WAY_LIST [ALIAS_KEY]}.make, cur_change)
+			create Result.make
+
+			across
+				stack.last.current_object.attributes as atts
+			loop
+				if atts.key.assigned and across Result as e all e.item /~ atts.key.name end then
+					Result.force (atts.key.name)
+				end
+			end
+
 		end
 
 feature -- Updating

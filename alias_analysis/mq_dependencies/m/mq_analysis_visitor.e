@@ -181,14 +181,7 @@ feature {NONE} -- utilities
 		require
 			a_node /= Void
 		do
-			if tracing then
-				print (a_node)
-			end
 			if attached {ACCESS_FEAT_AS} a_node as l_node then
-				if tracing then
-					print (l_node.access_name_32)
-					io.new_line
-				end
 				if l_node.is_local or l_node.is_argument or l_node.is_object_test_local or l_node.is_tuple_access then
 						-- we do not care about them
 					do_nothing
@@ -228,12 +221,6 @@ feature {NONE} -- utilities
 				end
 			elseif attached {NESTED_AS} a_node as l_node then
 				store_info (l_node.target, is_qualified_call)
-				if tracing then
-					print (l_node.target)
-					io.new_line
-					print (l_node.message)
-					io.new_line
-				end
 				store_info (l_node.message, true)
 			elseif attached {BINARY_AS} a_node as l_node then
 				store_info (l_node.left, is_qualified_call)
