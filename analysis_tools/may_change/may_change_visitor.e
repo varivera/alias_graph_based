@@ -58,9 +58,9 @@ feature {NONE}
 					if attached {ID_AS} models.item as l_item and then not model_queries_list.has (l_item.name_8) then
 						model_queries_list.extend (l_item.name_8)
 					else
-						check
-							False
-						end
+--						check
+--							False
+--						end
 					end
 					models.forth
 				end
@@ -83,9 +83,6 @@ feature {NONE}
 				if not list.has (attr) then
 					list.extend (attr)
 				end
-
-
-
 			elseif a_node.is_tuple_access then
 					-- Nothing
 			elseif a_node.is_argument then

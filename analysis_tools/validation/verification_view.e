@@ -214,31 +214,60 @@ feature {NONE}
 			l_visitor: MAY_CHANGE_VISITOR
 			assertion_server: ASSERTION_SERVER
 		do
-			if routine.e_feature.name_32 ~ "at" then
-
-			create l_visitor.make (routine)
-			create assertion_server.make_for_feature (routine, routine.body)
-			across
-				assertion_server.current_assertion as c
-			loop
-				if c.item.postcondition /= VOID then
-					c.item.postcondition.process (l_visitor)
-				end
-			end
-				--			routine.access_class.ast.features.process (l_visitor)
+			print (routine.e_feature.name_32)
+			io.new_line
+			if not routine.is_function then
+				create l_visitor.make (routine)
 
 			across
-				routine.access_class.constant_features as constants
+				routine.access_class.parents_classes as c
 			loop
-				if l_visitor.may_change_list.has (constants.item.name_8) then
-					l_visitor.may_change_list.prune (constants.item.name_8)
-				elseif l_visitor.may_change_query_list.has (constants.item.name_8) then
-					l_visitor.may_change_query_list.prune (constants.item.name_8)
-				end
+				c.item.ast.top_indexes.process (l_visitor)
+				find_ancestors (c.item, l_visitor)
 			end
+			routine.access_class.ast.top_indexes.process (l_visitor)
 
-			-- For non-model queries  l_visitor.may_change_list as i
-			may.force (l_visitor.may_change_list, routine.e_feature.name_32)
+				create assertion_server.make_for_feature (routine, routine.body)
+				across
+					assertion_server.current_assertion as c
+				loop
+					if c.item.postcondition /= VOID then
+						c.item.postcondition.process (l_visitor)
+					end
+				end
+					--			routine.access_class.ast.features.process (l_visitor)
+
+
+				across
+				l_visitor.may_change_list	 as i
+				loop
+					print (i.item)
+					io.new_line
+				end
+
+				across
+				l_visitor.may_change_query_list	 as i
+				loop
+					print (i.item)
+					io.new_line
+				end
+
+				across
+					routine.access_class.constant_features as constants
+				loop
+					if l_visitor.may_change_list.has (constants.item.name_8) then
+						l_visitor.may_change_list.prune (constants.item.name_8)
+					elseif l_visitor.may_change_query_list.has (constants.item.name_8) then
+						l_visitor.may_change_query_list.prune (constants.item.name_8)
+					end
+				end
+
+
+
+					-- For non-model queries  l_visitor.may_change_list as i
+				may.force (l_visitor.may_change_list, routine.e_feature.name_32)
+			else
+				may.force (create {TWO_WAY_LIST [STRING]}.make, routine.e_feature.name_32)
 			end
 		end
 
