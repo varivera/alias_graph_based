@@ -54,8 +54,6 @@ feature {NONE}
 				across
 					System.class_of_id (id_class).parents_classes as parent
 				loop
-					print (parent.item.name)
-					io.new_line
 					id_class := parent.item.class_id
 					if parent.item.name /~ "ANY" and then attached parent.item.feature_named_32 (feature_name) as feat then
 						feat.body.process (Current)

@@ -60,100 +60,207 @@ feature {NONE}
 	on_stone_changed (a_stone: STONE)
 		local
 			l_result: STRING
+			ver1: PLAIN_TEXT_FILE
+			ver2: PLAIN_TEXT_FILE
 		do
 			reset
 			l_result := ""
 			print ("%N=================================================================%N")
+			print ("%N=================================================================%N")
+			print ("%N=================================================================%N")
+			create ver1.make_open_write ("/home/varivera/Desktop/toDelete/results/ver1.csv")
+			ver1.put_string ("Class Name,Feature Name,Allow to Change (modify clause), Allow to Change (mapped), Atts changed, Ver%N")
+			create ver2.make_open_write ("/home/varivera/Desktop/toDelete/results/ver2.csv")
+			ver2.put_string ("Class Name,Feature Name,Allow to Change (may change), Allow to Change (mapped), Atts changed, Ver%N")
+
 			if attached {CLUSTER_STONE} a_stone as fs then
-				do_nothing
+				clusters (fs.cluster_i, l_result, ver1, ver2)
 			elseif attached {FEATURE_STONE} a_stone as fs and then attached {E_ROUTINE} fs.e_feature as r and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine then
 					--feature_view.set_stone (a_stone)
 				do_nothing
 			elseif attached {CLASSC_STONE} a_stone as c and then attached {CLASS_C} c.class_i.compiled_class as cla then
-				if not cla.name.starts_with ("MML_") and not (cla.name ~ "V_STRING_INPUT") and not (cla.name ~ "V_DEFAULT") then
-					if System.eiffel_universe.classes_with_name (cla.name).count = 1 then
-						class_to_analyse (cla, cla.name, l_result)
-					end
-				end
+				class_to_analyse (cla, cla.name, l_result, ver1, ver2)
 			end
+
+			ver1.close
+			ver2.close
 			info_text.set_text (l_result)
 		end
 
-	class_to_analyse (class_: CLASS_C; actual_class_name, a_result: STRING)
+	clusters (c: CLUSTER_I; a_result: STRING; ver1, ver2: PLAIN_TEXT_FILE)
+			-- Apply verification to all classes in cluster `c' (including nested
+			-- clusters)
+		local
+			class_: CLASS_C
+		do
+			print ("%N=================================================================%N")
+			print ("Cluster: " + c.cluster_name)
+			print ("%N=================================================================%N")
+			io.new_line
+			io.new_line
+			across
+				c.classes as cla
+			loop
+				class_ := System.eiffel_universe.classes_with_name (cla.item.actual_class.name).first.compiled_class
+				class_to_analyse (class_, cla.item.actual_class.name, a_result, ver1, ver2)
+			end
+			io.new_line
+			io.new_line
+			if attached c.sub_clusters as sc then
+				across
+					sc as clu
+				loop
+					clusters (clu.item, a_result, ver1, ver2)
+				end
+			end
+		end
+
+	class_to_analyse (class_: CLASS_C; actual_class_name, a_result: STRING; ver1, ver2: PLAIN_TEXT_FILE)
 			-- different analysis
 		local
-			mq: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
+			map_model_query_to_atts: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
 				-- mapping from MQ to class attributes
-			atts_mod: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
+
+			modified_atts: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
 				-- set of modified attributes per feature in class `class_'
-			mc: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
+			queries_modify_clause: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
 				-- set of modify clauses per feature in class `class_'
 
 			may_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
 			-- set of model queries allowed to be modified in class `class_' by features
 		do
-			print ("VERIFICATION Analysis%N")
-			a_result.append ("Class: ")
-			a_result.append (class_.name)
-			a_result.append ("%NMap MQ to Class Attributes%N")
-
-				-- 1)
-			create mq.make (0)
-			--map_mq_to_atts (class_, actual_class_name, mq)
-			a_result.append (map_to_string (mq))
-
-				-- 2)
-			create atts_mod.make (0)
-			create mc.make (0)
-			create may_change.make (0)
-			change_modify_may (class_, actual_class_name, atts_mod, mc, may_change)
-			a_result.append ("%NModified Class Attributes by feature%N")
-			a_result.append (atts_mod_to_string (atts_mod))
-			a_result.append ("%NModified Clause by feature%N")
-			a_result.append (atts_mod_to_string (mc))
-			a_result.append ("%NMay change atts by feature%N")
-			a_result.append (atts_mod_to_string (may_change))
+			if not actual_class_name.starts_with ("MML_")
+				and not (actual_class_name ~ "V_STRING_INPUT")
+				and not (actual_class_name ~ "V_DEFAULT")
+				and not class_.is_deferred
+			then
+				if System.eiffel_universe.classes_with_name (actual_class_name).count = 1 then
+					print ("Class: " + actual_class_name)
+					io.new_line
+					create map_model_query_to_atts.make (0)
+					create modified_atts.make (0)
+					create queries_modify_clause.make (0)
+					create may_change.make (0)
+					map_mq_to_atts (class_, class_.class_id, actual_class_name, map_model_query_to_atts)
+					change_modify_may (class_, actual_class_name, modified_atts, queries_modify_clause, may_change)
+					visualisation (map_model_query_to_atts, modified_atts, queries_modify_clause, may_change, class_.name, a_result)
+					ver1.put_string (actual_class_name + "%N")
+					ver2.put_string (actual_class_name + "%N")
+					verification_1 (modified_atts, map_model_query_to_atts, queries_modify_clause, ver1)
+					verification_2 (modified_atts, map_model_query_to_atts, may_change, ver2)
+				end
+			end
 		end
 
-	map_mq_to_atts (class_: CLASS_C; actual_class_name: STRING; mq: HASH_TABLE [TWO_WAY_LIST [STRING], STRING])
+	verification_1 (modified_atts, map_model_query_to_atts, queries_modify_clause: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; res: PLAIN_TEXT_FILE)
+			-- the result of change calculus should be a subset of
+			-- the set of the modify clause
+			-- it reports the result is res
+		require
+			modified_atts.count = queries_modify_clause.count
+		local
+			changed, allow_to_change: TWO_WAY_LIST [STRING]
+		do
+			across
+				modified_atts as feat
+			loop
+				changed := feat.item
+				allow_to_change := get_map (map_model_query_to_atts, queries_modify_clause [feat.key])
+				res.put_string ("," + feat.key + "," + list_to_string (queries_modify_clause [feat.key]) + "," + list_to_string (allow_to_change) + "," + list_to_string (changed) + "," + set_relation (changed, allow_to_change).out + "%N")
+			end
+		end
+
+	verification_2 (modified_atts, map_model_query_to_atts, may_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; res: PLAIN_TEXT_FILE)
+			-- the result of change calculus should be a subset of
+			-- the set of the may change
+			-- it reports the result is res
+		require
+			modified_atts.count = may_change.count
+		local
+			changed, allow_to_change: TWO_WAY_LIST [STRING]
+		do
+			across
+				modified_atts as feat
+			loop
+				changed := feat.item
+				allow_to_change := get_map (map_model_query_to_atts, may_change [feat.key])
+				res.put_string ("," + feat.key + "," + list_to_string (may_change [feat.key]) + "," + list_to_string (allow_to_change) + "," + list_to_string (changed) + "," + set_relation (changed, allow_to_change).out + "%N")
+			end
+		end
+
+	list_to_string (l: TWO_WAY_LIST [STRING]): STRING
+		do
+			Result := "["
+			across
+				l as i
+			loop
+				Result := Result + i.item
+				if not i.is_last then
+					Result := Result + "-"
+				end
+			end
+			Result := Result + "]"
+		end
+
+	get_map (mq: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; queries: TWO_WAY_LIST [STRING]): TWO_WAY_LIST [STRING]
+		do
+			create Result.make
+			across
+				queries as q
+			loop
+				if mq.has (q.item) then
+					Result.append (mq [q.item])
+				else
+					Result.force ("*" + q.item + "*")
+				end
+			end
+		end
+
+	set_relation (set1, set2: TWO_WAY_LIST [STRING]): INTEGER
+		do
+			if set1.count > set2.count then
+				Result := 3
+			else
+				Result := if across set1 as e all across set2 as e2 some e.item ~ e2.item end end then if set1.count = set2.count then 2 else 1 end else 3 end
+			end
+		ensure
+			Result = 1 or Result = 2 or Result = 3
+				-- Result = 1 implies set1.is_subset (set2)
+				-- Result = 2 implies set1 = set2
+				-- Result = 3 impliens set1 /= set2
+		end
+
+	map_mq_to_atts (class_: CLASS_C; class_base_id: INTEGER; actual_class_name: STRING; mq: HASH_TABLE [TWO_WAY_LIST [STRING], STRING])
 			-- it stores the map between Model Queries and Class Attributes for class `class_id'
 		local
 			l_visitor: MQ_ANALYSIS_VISITOR
+			mqs: TWO_WAY_LIST [STRING]
 		do
-			if attached class_.ast.top_indexes as top_indexes then
-				across
-					top_indexes as i
-				loop
-					if i.item.tag.name_32 ~ "model" then
-						across
-							i.item.index_list as ii
-						loop
-							print (ii.item.string_value_32)
-							io.new_line
-							if class_.feature_named_32 (ii.item.string_value_32).is_attribute then
-								mq.force (create {TWO_WAY_LIST [STRING]}.make, ii.item.string_value_32)
-								mq [ii.item.string_value_32].force (ii.item.string_value_32)
-							elseif attached {E_ROUTINE} class_.feature_named_32 (ii.item.string_value_32).e_feature as r and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine and then r.is_function then
-								if not r.is_deferred and then r.type.actual_type.name.starts_with ("MML") then
-									print ("Feature: " + ii.item.string_value_32)
-									io.new_line
-									create l_visitor.make (class_.class_id)
-									routine.body.process (l_visitor)
-									mq.force (l_visitor.mq_list, r.name_32)
-								else
-									mq.force (create {TWO_WAY_LIST [STRING]}.make, r.name_32)
-									mq [r.name_32].force (r.name_32 + "*")
-								end
-							end
-						end
-					end
-				end
+			create mqs.make
+			find_model_queries (class_, mqs)
+			if class_.name ~ "V_ARRAYED_LIST_ITERATOR" then
+				mqs.prune_all ("key_sequence")
+				mqs.force ("target_index_sequence")
 			end
 			across
-				System.class_of_id (class_.class_id).parents_classes as p
+				mqs as model
 			loop
-				if p.item.name /~ "ANY" then
-					map_mq_to_atts (p.item, p.item.name, mq)
+				print ("-> " + actual_class_name + " -- " + model.item)
+				io.new_line
+				if class_.feature_named_32 (model.item).is_attribute then
+					mq.force (create {TWO_WAY_LIST [STRING]}.make, model.item)
+					mq [model.item].force (model.item)
+				elseif attached {E_ROUTINE} class_.feature_named_32 (model.item).e_feature as r and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine and then r.is_function then
+					if not r.is_deferred and then r.type.actual_type.name.starts_with ("MML") then
+						print ("Mapping - Feature: " + model.item)
+						io.new_line
+						create l_visitor.make (class_base_id)
+						routine.body.process (l_visitor)
+						mq.force (l_visitor.mq_list, r.name_32)
+					else
+						mq.force (create {TWO_WAY_LIST [STRING]}.make, r.name_32)
+						mq [r.name_32].force (r.name_32 + "*")
+					end
 				end
 			end
 		end
@@ -163,7 +270,6 @@ feature {NONE}
 		local
 			i: INTEGER
 		do
-			print ("Analysis%N")
 			from
 				i := 1
 			until
@@ -171,18 +277,57 @@ feature {NONE}
 			loop
 				if not class_.feature_table.features.at (i).is_attribute and class_.feature_table.features.at (i).e_feature.associated_class.class_id = class_.class_id and attached {E_ROUTINE} class_.feature_table.features.at (i).e_feature as r and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine then
 						-- feature with issues
-					if (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_prepend")) and (class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend_at")) and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "subtree_twin")) and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy")) and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy")) and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy")) and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy")) and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left")) and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse")) and (class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse")) and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left")) and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "remove")) and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend")) and (class_.name ~ "V_HASH_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "search")) and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make_at_key")) and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "search_key")) and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "less_equal")) and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "item")) and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "at")) and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "less_equal")) and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_one")) and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_one_predicate")) and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_two")) and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_two_predicate")) and (class_.name ~ "V_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "default_create")) and (class_.name ~ "V_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "default_create")) and (class_.name ~ "V_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "with_object_equality")) and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make")) and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make")) and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "key_equivalence")) and (class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code")) and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy")) and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "key")) and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "item")) and (class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "prepend")) and (class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_at")) and (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "prepend")) and (class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_at")) and not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out") then
-						print ("====Feature: ")
-						print (class_.feature_table.features.at (i).e_feature.name_32)
-						print ("==(")
-						print (actual_class_name)
-						print (")==========")
-						io.new_line
+					if (
+						class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "test_prepend"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend_at"))
+					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "subtree_twin"))
+					and (class_.name ~ "V_BINARY_TREE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy"))
+					and (class_.name ~ "V_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "reverse"))
+					and (class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_left"))
+					and (class_.name ~ "V_SORTED_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "remove"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "extend"))
+					and (class_.name ~ "V_HASH_SET_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "search"))
+					and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make_at_key"))
+					and (class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "search_key"))
+					and (class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "less_equal"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "item"))
+					and (class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "at"))
+					and (class_.name ~ "V_GENERAL_SORTED_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "less_equal"))
+					and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_one"))
+					and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_one_predicate"))
+					and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_two"))
+					and (class_.name ~ "V_TUPLE_PROJECTOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "project_two_predicate"))
+					and (class_.name ~ "V_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "default_create"))
+					and (class_.name ~ "V_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "default_create")) and
+					(class_.name ~ "V_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "with_object_equality")) and
+					(class_.name ~ "V_GENERAL_HASH_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make")) and
+					(class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "make")) and
+					(class_.name ~ "V_GENERAL_SORTED_TABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "key_equivalence")) and
+					(class_.name ~ "V_REFERENCE_HASHABLE" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "hash_code")) and
+					(class_.name ~ "V_GENERAL_HASH_SET" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "copy")) and
+					(class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "key")) and
+					(class_.name ~ "V_SET_TABLE_ITERATOR" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "item")) and
+					(class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "prepend")) and
+					(class_.name ~ "V_DOUBLY_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_at")) and
+					(class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "prepend")) and
+					(class_.name ~ "V_LINKED_LIST" implies not (class_.feature_table.features.at (i).e_feature.name_32 ~ "insert_at")) and
+					not (class_.feature_table.features.at (i).e_feature.name_32 ~ "out") then
 						if class_.feature_table.features.at (i).e_feature.is_function implies not class_.feature_table.features.at (i).e_feature.type.actual_type.name.starts_with ("MML") then
-							--change_analysis (routine, atts_mod)
-
-							--modify_clause (routine, class_.class_id, mc)
-
+							print ("Feature: " + routine.e_feature.name_32)
+							io.new_line
+							print ("   change")
+							io.new_line
+							change_analysis (routine, atts_mod)
+							print ("   modify")
+							io.new_line
+							modify_clause (routine, class_.class_id, mc)
+							print ("   may change")
+							io.new_line
 							may_modify (routine, may)
 						end
 					end
@@ -214,19 +359,15 @@ feature {NONE}
 			l_visitor: MAY_CHANGE_VISITOR
 			assertion_server: ASSERTION_SERVER
 		do
-			print (routine.e_feature.name_32)
-			io.new_line
 			if not routine.is_function then
 				create l_visitor.make (routine)
-
-			across
-				routine.access_class.parents_classes as c
-			loop
-				c.item.ast.top_indexes.process (l_visitor)
-				find_ancestors (c.item, l_visitor)
-			end
-			routine.access_class.ast.top_indexes.process (l_visitor)
-
+				across
+					routine.access_class.parents_classes as c
+				loop
+					c.item.ast.top_indexes.process (l_visitor)
+					find_ancestors (c.item, l_visitor)
+				end
+				routine.access_class.ast.top_indexes.process (l_visitor)
 				create assertion_server.make_for_feature (routine, routine.body)
 				across
 					assertion_server.current_assertion as c
@@ -236,21 +377,6 @@ feature {NONE}
 					end
 				end
 					--			routine.access_class.ast.features.process (l_visitor)
-
-
-				across
-				l_visitor.may_change_list	 as i
-				loop
-					print (i.item)
-					io.new_line
-				end
-
-				across
-				l_visitor.may_change_query_list	 as i
-				loop
-					print (i.item)
-					io.new_line
-				end
 
 				across
 					routine.access_class.constant_features as constants
@@ -262,10 +388,9 @@ feature {NONE}
 					end
 				end
 
-
-
 					-- For non-model queries  l_visitor.may_change_list as i
-				may.force (l_visitor.may_change_list, routine.e_feature.name_32)
+
+				may.force (l_visitor.may_change_query_list, routine.e_feature.name_32)
 			else
 				may.force (create {TWO_WAY_LIST [STRING]}.make, routine.e_feature.name_32)
 			end
@@ -279,6 +404,33 @@ feature {NONE}
 				loop
 					c.item.ast.top_indexes.process (visitor)
 					find_ancestors (c.item, visitor)
+				end
+			end
+		end
+
+	find_model_queries (c: CLASS_C; res: TWO_WAY_LIST [STRING])
+			-- finds the model queries of class `c' and its descendants
+		do
+			if attached c.ast.top_indexes as top_indexes then
+				across
+					top_indexes as i
+				loop
+					if i.item.tag.name_32 ~ "model" then
+						across
+							i.item.index_list as ii
+						loop
+							if across res as mq all mq.item /~ ii.item.string_value_32 end then
+								res.force (ii.item.string_value_32)
+							end
+						end
+					end
+					across
+						System.class_of_id (c.class_id).parents_classes as p
+					loop
+						if p.item.name /~ "ANY" then
+							find_model_queries (p.item, res)
+						end
+					end
 				end
 			end
 		end
@@ -321,6 +473,76 @@ feature {NONE}
 					end
 				end
 				Result := Result + "]%N"
+			end
+		end
+
+	visualisation (mq, atts_mod, mc, may_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; class_name, a_result: STRING)
+		local
+			tmp: STRING
+		do
+			a_result.append ("Class: ")
+			a_result.append (class_name)
+			a_result.append ("%N%NMap from MQ to Class Attributes%N")
+			a_result.append (map_to_string (mq))
+			a_result.append ("%NModified Class Attributes per feature%N")
+			a_result.append (atts_mod_to_string (atts_mod))
+			a_result.append ("%NModified Clause by feature%N")
+			across
+				mc as feat
+			loop
+				a_result.append (feat.key + ": [")
+				tmp := "["
+				across
+					feat.item as mod_clause
+				loop
+					a_result.append (mod_clause.item)
+					if not mod_clause.is_last then
+						a_result.append (", ")
+					end
+					if mq.has (mod_clause.item) then
+						across
+							mq [mod_clause.item] as map
+						loop
+							tmp := tmp + map.item
+							if not feat.is_last or not mod_clause.is_last then
+								tmp := tmp + ", "
+							end
+						end
+					else
+						tmp := tmp + "*" + mod_clause.item + "*,"
+					end
+				end
+				tmp := tmp + "]%N"
+				a_result.append ("] -- " + tmp)
+			end
+			a_result.append ("%NMay change atts by feature%N")
+			across
+				may_change as feat
+			loop
+				a_result.append (feat.key + ": [")
+				tmp := "["
+				across
+					feat.item as mod_clause
+				loop
+					a_result.append (mod_clause.item)
+					if not mod_clause.is_last then
+						a_result.append (", ")
+					end
+					if mq.has (mod_clause.item) then
+						across
+							mq [mod_clause.item] as map
+						loop
+							tmp := tmp + map.item
+							if not feat.is_last or not mod_clause.is_last then
+								tmp := tmp + ", "
+							end
+						end
+					else
+						tmp := tmp + "*" + mod_clause.item + "*,"
+					end
+				end
+				tmp := tmp + "]%N"
+				a_result.append ("] -- " + tmp)
 			end
 		end
 

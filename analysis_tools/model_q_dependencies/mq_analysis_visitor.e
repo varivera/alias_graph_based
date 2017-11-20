@@ -28,7 +28,8 @@ inherit
 			process_routine_as,
 			process_access_feat_as,
 			process_nested_as,
-			process_current_as
+			process_current_as,
+			process_id_as
 		end
 
 	SHARED_SERVER
@@ -45,6 +46,7 @@ feature {NONE}
 			create mq_list.make
 			class_base_id := class_id
 			create calls.make
+			create iv.make
 		end
 
 feature {ANY}
@@ -57,6 +59,10 @@ feature {ANY}
 
 	calls: TWO_WAY_LIST [STRING]
 			-- call feature to handle recursion: this needs to be improved
+
+feature {NONE} -- Iteration Variable
+	iv: TWO_WAY_LIST [STRING]
+		-- in case of nested loops
 
 feature {NONE}
 
@@ -108,8 +114,13 @@ feature {NONE}
 			if attached {EXPR_CALL_AS} a_node.target as l_target1 and then -- foo.bar
 				attached {NESTED_AS} l_target1.call as l_target2 -- foo.bar
 			then
-				store_info (l_target2.target, false)
-				store_info (a_node.source, true)
+				if iv.count > 0 and then iv.last /= Void then
+						-- inside a loop with iterator as Current
+					store_info (a_node.source, false)
+				else
+					store_info (l_target2.target, false)
+					store_info (a_node.source, true)
+				end
 			elseif -- foo [bar] := baz
 				attached {BRACKET_AS} a_node.target as l_target2
 			then
@@ -148,10 +159,13 @@ feature {NONE}
 
 	process_loop_as (a_node: LOOP_AS)
 		do
+			iv.force (Void)
 			safe_process (a_node.iteration)
 			safe_process (a_node.from_part)
 			safe_process (a_node.stop)
 			safe_process (a_node.compound)
+			iv.finish
+			iv.remove
 		end
 
 	process_object_test_as (a_node: OBJECT_TEST_AS)
@@ -169,8 +183,22 @@ feature {NONE}
 
 	process_current_as (a_node: CURRENT_AS)
 		do
-			if across mq_list as mq all mq.item /~ "Current" end then
-				mq_list.force ("Current")
+--			if across mq_list as mq all mq.item /~ "Current" end then
+--				mq_list.force ("Current")
+--			end
+				-- inside a loop
+			iv.finish
+			if iv.count > 0 and then iv.item = Void then
+				iv.replace ("Current")
+			end
+		end
+
+
+	process_id_as (l_node: ID_AS)
+		do
+			iv.finish
+			if iv.count > 0 and then attached iv.item as id and then id ~ "Current" then
+				iv.replace (l_node.name_32)
 			end
 		end
 
@@ -220,8 +248,17 @@ feature {NONE} -- utilities
 					end
 				end
 			elseif attached {NESTED_AS} a_node as l_node then
-				store_info (l_node.target, is_qualified_call)
-				store_info (l_node.message, true)
+				if iv.count > 0 and then iv.last /= Void and then
+					attached {ACCESS_FEAT_AS} l_node.target as feat and then
+						feat.access_name_32 ~ iv.last
+				then
+						-- inside a loop with iterator as Current
+					--store_info (l_node.message, false)
+					System.class_of_id (class_base_id).feature_named_32 ("new_cursor").body.process (Current)
+				else
+					store_info (l_node.target, is_qualified_call)
+					store_info (l_node.message, true)
+				end
 			elseif attached {BINARY_AS} a_node as l_node then
 				store_info (l_node.left, is_qualified_call)
 				store_info (l_node.right, false)
