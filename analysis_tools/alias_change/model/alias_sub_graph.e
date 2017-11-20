@@ -731,7 +731,10 @@ feature -- Managing merging nodes (for loops and recursion)
 						end
 					end
 				else
-					print ("No Subsume%N")
+					if tracing then
+						print ("No Subsume%N")
+					end
+					do_nothing
 						-- nodes did not reach N fixed point
 				end
 			end

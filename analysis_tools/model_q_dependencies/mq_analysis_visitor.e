@@ -254,7 +254,12 @@ feature {NONE} -- utilities
 				then
 						-- inside a loop with iterator as Current
 					--store_info (l_node.message, false)
-					System.class_of_id (class_base_id).feature_named_32 ("new_cursor").body.process (Current)
+
+					if System.class_of_id (class_base_id).name ~ "V_BINARY_TREE" then
+						System.class_of_id (class_base_id).feature_named_32 ("inorder").body.process (Current)
+					else
+						System.class_of_id (class_base_id).feature_named_32 ("new_cursor").body.process (Current)
+					end
 				else
 					store_info (l_node.target, is_qualified_call)
 					store_info (l_node.message, true)

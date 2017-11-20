@@ -152,6 +152,8 @@ feature {NONE}
 				l_as.target.process (Current)
 				is_inside_class := FALSE
 				l_as.message.process (Current)
+					-- it might not work with nested calls
+				is_inside_class := True
 			end
 		end
 
@@ -160,6 +162,8 @@ feature {NONE}
 			l_as.left.process (Current)
 			is_inside_class := FALSE
 			function_handling (l_as)
+				-- it might not work with nested calls
+			is_inside_class := True
 		end
 
 	process_access_assert_as (a_node: ACCESS_ASSERT_AS)

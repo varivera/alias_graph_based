@@ -60,34 +60,47 @@ feature {NONE}
 	on_stone_changed (a_stone: STONE)
 		local
 			l_result: STRING
-			ver1: PLAIN_TEXT_FILE
-			ver2: PLAIN_TEXT_FILE
+			ver1_mq_inherited: PLAIN_TEXT_FILE
+			ver1_mq_not_inherited: PLAIN_TEXT_FILE
+			ver2_mq_inherited: PLAIN_TEXT_FILE
+			ver2_mq_not_inherited: PLAIN_TEXT_FILE
+			map: PLAIN_TEXT_FILE
 		do
 			reset
 			l_result := ""
 			print ("%N=================================================================%N")
 			print ("%N=================================================================%N")
 			print ("%N=================================================================%N")
-			create ver1.make_open_write ("/home/varivera/Desktop/toDelete/results/ver1.csv")
-			ver1.put_string ("Class Name,Feature Name,Allow to Change (modify clause), Allow to Change (mapped), Atts changed, Ver%N")
-			create ver2.make_open_write ("/home/varivera/Desktop/toDelete/results/ver2.csv")
-			ver2.put_string ("Class Name,Feature Name,Allow to Change (may change), Allow to Change (mapped), Atts changed, Ver%N")
+			create ver1_mq_inherited.make_open_write ((create {TRACING}).ver1_file)
+			ver1_mq_inherited.put_string ("Class Name,Feature Name,Atts changed, MQ changed, Allow to Change (modify clause), Ver%N")
+			create ver1_mq_not_inherited.make_open_write ((create {TRACING}).ver1_a_file)
+			ver1_mq_not_inherited.put_string ("Class Name,Feature Name,Atts changed, MQ changed, Allow to Change (modify clause), Ver%N")
+			create ver2_mq_inherited.make_open_write ((create {TRACING}).ver2_file)
+			ver2_mq_inherited.put_string ("Class Name,Feature Name,Allow to Change (may change), Allow to Change (mapped), Atts changed, Ver%N")
+			create ver2_mq_not_inherited.make_open_write ((create {TRACING}).ver2_a_file)
+			ver2_mq_not_inherited.put_string ("Class Name,Feature Name,Allow to Change (may change), Allow to Change (mapped), Atts changed, Ver%N")
+			create map.make_open_write ((create {TRACING}).map_file)
+			map.put_string ("Class Name,Map (no inherited),Map (inherited)%N")
+
 
 			if attached {CLUSTER_STONE} a_stone as fs then
-				clusters (fs.cluster_i, l_result, ver1, ver2)
+				clusters (fs.cluster_i, l_result, ver1_mq_inherited, ver1_mq_not_inherited, ver2_mq_inherited, ver2_mq_not_inherited, map)
 			elseif attached {FEATURE_STONE} a_stone as fs and then attached {E_ROUTINE} fs.e_feature as r and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine then
 					--feature_view.set_stone (a_stone)
 				do_nothing
 			elseif attached {CLASSC_STONE} a_stone as c and then attached {CLASS_C} c.class_i.compiled_class as cla then
-				class_to_analyse (cla, cla.name, l_result, ver1, ver2)
+				class_to_analyse (cla, cla.name, l_result, ver1_mq_inherited, ver1_mq_not_inherited, ver2_mq_inherited, ver2_mq_not_inherited, map)
 			end
 
-			ver1.close
-			ver2.close
+			ver1_mq_inherited.close
+			ver1_mq_not_inherited.close
+			ver2_mq_inherited.close
+			ver2_mq_not_inherited.close
+			map.close
 			info_text.set_text (l_result)
 		end
 
-	clusters (c: CLUSTER_I; a_result: STRING; ver1, ver2: PLAIN_TEXT_FILE)
+	clusters (c: CLUSTER_I; a_result: STRING; ver1_mq_inherited, ver1_mq_not_inherited, ver2_mq_inherited, ver2_mq_not_inherited, map: PLAIN_TEXT_FILE)
 			-- Apply verification to all classes in cluster `c' (including nested
 			-- clusters)
 		local
@@ -102,7 +115,7 @@ feature {NONE}
 				c.classes as cla
 			loop
 				class_ := System.eiffel_universe.classes_with_name (cla.item.actual_class.name).first.compiled_class
-				class_to_analyse (class_, cla.item.actual_class.name, a_result, ver1, ver2)
+				class_to_analyse (class_, cla.item.actual_class.name, a_result, ver1, ver1_a, ver2, map)
 			end
 			io.new_line
 			io.new_line
@@ -110,16 +123,19 @@ feature {NONE}
 				across
 					sc as clu
 				loop
-					clusters (clu.item, a_result, ver1, ver2)
+					clusters (clu.item, a_result, ver1, ver1_a, ver2, map)
 				end
 			end
 		end
 
-	class_to_analyse (class_: CLASS_C; actual_class_name, a_result: STRING; ver1, ver2: PLAIN_TEXT_FILE)
+	class_to_analyse (class_: CLASS_C; actual_class_name, a_result: STRING; ver1_mq_inherited, ver1_mq_not_inherited, ver2_mq_inherited, ver2_mq_not_inherited, map: PLAIN_TEXT_FILE)
 			-- different analysis
 		local
 			map_model_query_to_atts: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
 				-- mapping from MQ to class attributes
+
+			map_model_query_to_atts2: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
+				-- mapping from MQ to class attributes (no inheriting MQ)
 
 			modified_atts: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
 				-- set of modified attributes per feature in class `class_'
@@ -143,16 +159,23 @@ feature {NONE}
 					create may_change.make (0)
 					map_mq_to_atts (class_, class_.class_id, actual_class_name, map_model_query_to_atts)
 					change_modify_may (class_, actual_class_name, modified_atts, queries_modify_clause, may_change)
-					visualisation (map_model_query_to_atts, modified_atts, queries_modify_clause, may_change, class_.name, a_result)
-					ver1.put_string (actual_class_name + "%N")
-					ver2.put_string (actual_class_name + "%N")
-					verification_1 (modified_atts, map_model_query_to_atts, queries_modify_clause, ver1)
-					verification_2 (modified_atts, map_model_query_to_atts, may_change, ver2)
+
+					--verification_1 (modified_atts, map_model_query_to_atts, queries_modify_clause, actual_class_name, ver1)
+						-- without carrying our model queries
+					create map_model_query_to_atts2.make (0)
+					map_mq_to_atts_no_inheriting_mq (class_, class_.class_id, actual_class_name, map_model_query_to_atts2)
+					verification_1 (modified_atts, map_model_query_to_atts2, queries_modify_clause, actual_class_name, ver1_a)
+					verification_2 (modified_atts, map_model_query_to_atts, may_change, actual_class_name, ver2)
+					--verification_2 (modified_atts, map_model_query_to_atts, may_change, actual_class_name, ver2)
+
+
+					visualisation (map_model_query_to_atts, map_model_query_to_atts2, modified_atts, queries_modify_clause, may_change, class_.name, a_result)
+					map.put_string (actual_class_name + "," + map_to_string_no_commas (map_model_query_to_atts2) + "," + map_to_string_no_commas (map_model_query_to_atts) + "%N")
 				end
 			end
 		end
 
-	verification_1 (modified_atts, map_model_query_to_atts, queries_modify_clause: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; res: PLAIN_TEXT_FILE)
+	verification_1 (modified_atts, map_model_query_to_atts, queries_modify_clause: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; class_name: STRING; res: PLAIN_TEXT_FILE)
 			-- the result of change calculus should be a subset of
 			-- the set of the modify clause
 			-- it reports the result is res
@@ -160,17 +183,80 @@ feature {NONE}
 			modified_atts.count = queries_modify_clause.count
 		local
 			changed, allow_to_change: TWO_WAY_LIST [STRING]
+			mapped_modified_atts: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
 		do
+--			print ("%N==========================================================%N")
+--			print (map_to_string (map_model_query_to_atts))
+--			print ("%N==========================================================%N")
+--			print (map_to_string (modified_atts))
+--			print ("%N==========================================================%N")
+--			--print (map_to_string (atts_to_model_queries (map_model_query_to_atts, modified_atts)))
+--			print ("%N==========================================================%N")
+			mapped_modified_atts := atts_to_model_queries (map_model_query_to_atts, modified_atts)
 			across
-				modified_atts as feat
+				mapped_modified_atts as feat
 			loop
-				changed := feat.item
+				check modified_atts.has (feat.key) end
+				changed := modified_atts[feat.key]
 				allow_to_change := get_map (map_model_query_to_atts, queries_modify_clause [feat.key])
-				res.put_string ("," + feat.key + "," + list_to_string (queries_modify_clause [feat.key]) + "," + list_to_string (allow_to_change) + "," + list_to_string (changed) + "," + set_relation (changed, allow_to_change).out + "%N")
+				res.put_string (class_name + "," + feat.key + "," + list_to_string (changed) + "," + list_to_string (feat.item) + "," +
+				list_to_string (queries_modify_clause [feat.key]) + "," + set_relation (feat.item, queries_modify_clause[feat.key]).out + "%N")
 			end
 		end
 
-	verification_2 (modified_atts, map_model_query_to_atts, may_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; res: PLAIN_TEXT_FILE)
+	atts_to_model_queries (mq_map, modified_atts: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]): HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
+			-- given the map between model queries and class attributes they depend on
+			-- and the map between features and actual class attibutes being modified by features
+			-- returns for each feature the set of modified model queries
+		local
+			tmp: TWO_WAY_LIST [STRING]
+		do
+			create Result.make (modified_atts.count)
+			across
+				modified_atts as feat
+			loop
+				Result.force (create {TWO_WAY_LIST [STRING]}.make, feat.key)
+				across
+					feat.item as atts
+				loop
+					across
+						mq_map as mq
+					loop
+						if is_in_list (atts.item, mq.item) then
+							across
+								Result[feat.key] as i
+							loop
+								print (i.item)
+								io.new_line
+							end
+							print (mq.key)
+							io.new_line
+							print ("%N"+feat.key+"====%N")
+							if not is_in_list (mq.key, Result [feat.key]) then
+								Result [feat.key].force (mq.key)
+							end
+
+						end
+					end
+				end
+			end
+
+			create tmp.make
+			tmp.force ("a")
+			tmp.force ("c")
+			tmp.force ("d")
+
+			print (is_in_list("d",tmp))
+			print (is_in_list("f",tmp))
+
+		end
+
+	is_in_list (e: STRING; l: TWO_WAY_LIST [STRING]): BOOLEAN
+		do
+			Result := across l as elems some e ~ elems.item  end
+		end
+
+	verification_2 (modified_atts, map_model_query_to_atts, may_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; class_name: STRING; res: PLAIN_TEXT_FILE)
 			-- the result of change calculus should be a subset of
 			-- the set of the may change
 			-- it reports the result is res
@@ -184,7 +270,7 @@ feature {NONE}
 			loop
 				changed := feat.item
 				allow_to_change := get_map (map_model_query_to_atts, may_change [feat.key])
-				res.put_string ("," + feat.key + "," + list_to_string (may_change [feat.key]) + "," + list_to_string (allow_to_change) + "," + list_to_string (changed) + "," + set_relation (changed, allow_to_change).out + "%N")
+				res.put_string (class_name + "," + feat.key + "," + list_to_string (may_change [feat.key]) + "," + list_to_string (allow_to_change) + "," + list_to_string (changed) + "," + set_relation (changed, allow_to_change).out + "%N")
 			end
 		end
 
@@ -238,20 +324,92 @@ feature {NONE}
 		do
 			create mqs.make
 			find_model_queries (class_, mqs)
-			if class_.name ~ "V_ARRAYED_LIST_ITERATOR" then
-				mqs.prune_all ("key_sequence")
-				mqs.force ("target_index_sequence")
+
+			across
+				mqs as m
+			loop
+				print (m.item)
+				io.new_line
 			end
+
+			if
+				class_.name ~ "V_ARRAYED_LIST_ITERATOR"
+				or class_.name ~ "V_ARRAY_ITERATOR"
+				or class_.name ~ "V_DOUBLY_LINKED_LIST_ITERATOR"
+				or class_.name ~ "V_LINKED_LIST_ITERATOR"
+			then
+				across
+					mqs as e
+				loop
+					if e.item ~ "key_sequence" then
+						e.item.replace_substring_all ("key_sequence", "target_index_sequence")
+					end
+				end
+			end
+			if
+				class_.name ~ "V_SET_TABLE_ITERATOR"
+			then
+				across
+					mqs as e
+				loop
+					if e.item ~ "sequence" then
+						e.item.replace_substring_all ("sequence", "value_sequence")
+					end
+				end
+			end
+
 			across
 				mqs as model
 			loop
-				print ("-> " + actual_class_name + " -- " + model.item)
-				io.new_line
+
 				if class_.feature_named_32 (model.item).is_attribute then
 					mq.force (create {TWO_WAY_LIST [STRING]}.make, model.item)
 					mq [model.item].force (model.item)
 				elseif attached {E_ROUTINE} class_.feature_named_32 (model.item).e_feature as r and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine and then r.is_function then
-					if not r.is_deferred and then r.type.actual_type.name.starts_with ("MML") then
+					if not r.is_deferred
+						-- apparently they do not need to be MML and then r.type.actual_type.name.starts_with ("MML")
+					then
+						print ("Mapping - Feature: " + model.item)
+						io.new_line
+						create l_visitor.make (class_base_id)
+						routine.body.process (l_visitor)
+						mq.force (l_visitor.mq_list, r.name_32)
+					else
+						mq.force (create {TWO_WAY_LIST [STRING]}.make, r.name_32)
+						mq [r.name_32].force (r.name_32 + "*")
+					end
+				end
+			end
+		end
+
+
+	map_mq_to_atts_no_inheriting_mq (class_: CLASS_C; class_base_id: INTEGER; actual_class_name: STRING; mq: HASH_TABLE [TWO_WAY_LIST [STRING], STRING])
+			-- it stores the map between Model Queries and Class Attributes for class `class_id'
+		local
+			l_visitor: MQ_ANALYSIS_VISITOR
+			mqs: TWO_WAY_LIST [STRING]
+		do
+			create mqs.make
+			find_model_queries2 (class_, mqs)
+
+			across
+				mqs as m
+			loop
+				print (m.item)
+				io.new_line
+			end
+
+			across
+				mqs as model
+			loop
+
+				if class_.feature_named_32 (model.item).is_attribute then
+					mq.force (create {TWO_WAY_LIST [STRING]}.make, model.item)
+					mq [model.item].force (model.item)
+				elseif attached {E_ROUTINE} class_.feature_named_32 (model.item).e_feature as r and then attached {PROCEDURE_I} r.associated_class.feature_named_32 (r.name_32) as routine and then r.is_function then
+					if not r.is_deferred
+						-- apparently they do not need to be MML and then r.type.actual_type.name.starts_with ("MML")
+					then
 						print ("Mapping - Feature: " + model.item)
 						io.new_line
 						create l_visitor.make (class_base_id)
@@ -359,6 +517,9 @@ feature {NONE}
 			l_visitor: MAY_CHANGE_VISITOR
 			assertion_server: ASSERTION_SERVER
 		do
+			if routine.e_feature.name_32 ~ "make" then
+				print ("")
+			end
 			if not routine.is_function then
 				create l_visitor.make (routine)
 				across
@@ -376,6 +537,7 @@ feature {NONE}
 						c.item.postcondition.process (l_visitor)
 					end
 				end
+
 					--			routine.access_class.ast.features.process (l_visitor)
 
 				across
@@ -435,6 +597,26 @@ feature {NONE}
 			end
 		end
 
+	find_model_queries2 (c: CLASS_C; res: TWO_WAY_LIST [STRING])
+			-- finds the model queries of class `c' and its descendants
+		do
+			if attached c.ast.top_indexes as top_indexes then
+				across
+					top_indexes as i
+				loop
+					if i.item.tag.name_32 ~ "model" then
+						across
+							i.item.index_list as ii
+						loop
+							if across res as mq all mq.item /~ ii.item.string_value_32 end then
+								res.force (ii.item.string_value_32)
+							end
+						end
+					end
+				end
+			end
+		end
+
 	map_to_string (res: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]): STRING
 		do
 			Result := ""
@@ -457,6 +639,29 @@ feature {NONE}
 			end
 		end
 
+	map_to_string_no_commas (res: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]): STRING
+		do
+			Result := "{"
+			across
+				res as mq
+			loop
+				if mq.item.count > 0 then
+					Result := Result + "" + mq.key + ": ["
+					across
+						mq.item as att
+					loop
+						Result := Result + att.item
+						if not att.is_last then
+							Result := Result + "-"
+						end
+					end
+					Result := Result + "]"
+				end
+				Result := Result + " - "
+			end
+			Result := Result + "}"
+		end
+
 	atts_mod_to_string (res: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]): STRING
 		do
 			Result := ""
@@ -476,7 +681,7 @@ feature {NONE}
 			end
 		end
 
-	visualisation (mq, atts_mod, mc, may_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; class_name, a_result: STRING)
+	visualisation (mq, mq2, atts_mod, mc, may_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; class_name, a_result: STRING)
 		local
 			tmp: STRING
 		do
@@ -484,6 +689,8 @@ feature {NONE}
 			a_result.append (class_name)
 			a_result.append ("%N%NMap from MQ to Class Attributes%N")
 			a_result.append (map_to_string (mq))
+			a_result.append ("%N%NMap from MQ to Class Attributes (no inherited MQ)%N")
+			a_result.append (map_to_string (mq2))
 			a_result.append ("%NModified Class Attributes per feature%N")
 			a_result.append (atts_mod_to_string (atts_mod))
 			a_result.append ("%NModified Clause by feature%N")
@@ -545,6 +752,7 @@ feature {NONE}
 				a_result.append ("] -- " + tmp)
 			end
 		end
+
 
 invariant
 	feature_view /= Void

@@ -1,15 +1,61 @@
 class
 	TRACING
 
+
 create
-	plot
+	plot, default_create
 
 feature
 
-	tracing: BOOLEAN = false
+	tracing: BOOLEAN = true
 			-- should it print?
 
-	os_v: INTEGER = 2
+	os_v: INTEGER = 1
+
+	map_file: STRING
+		do
+			if os_v = 1 then
+				Result := "C:\Users\v.rivera\Desktop\toDelete\resultAlias\map.csv"
+			else
+				Result := "/home/varivera/Desktop/toDelete/results/map.csv"
+			end
+		end
+
+	ver1_file: STRING
+		do
+			if os_v = 1 then
+				Result := "C:\Users\v.rivera\Desktop\toDelete\resultAlias\ver1-mq-inherited.csv"
+			else
+				Result := "/home/varivera/Desktop/toDelete/results/ver1.csv"
+			end
+		end
+
+	ver1_a_file: STRING
+		do
+			if os_v = 1 then
+				Result := "C:\Users\v.rivera\Desktop\toDelete\resultAlias\ver1-mq-inherited.csv"
+			else
+				Result := ""
+			end
+		end
+
+	ver2_file: STRING
+		do
+			if os_v = 1 then
+				Result := "C:\Users\v.rivera\Desktop\toDelete\resultAlias\ver2-mq-inherited.csv"
+			else
+				Result := "/home/varivera/Desktop/toDelete/results/ver2.csv"
+			end
+		end
+
+	ver2_a_file: STRING
+		do
+			if os_v = 1 then
+				Result := "C:\Users\v.rivera\Desktop\toDelete\resultAlias\ver2-mq-not-inherited.csv"
+			else
+				Result := "/home/varivera/Desktop/toDelete/results/ver2.csv"
+			end
+		end
 
 	plot (graph: STRING)
 		local
