@@ -7,7 +7,7 @@ create
 
 feature
 
-	tracing: BOOLEAN = true
+	tracing: BOOLEAN = false
 			-- should it print?
 
 	os_v: INTEGER = 1
@@ -33,7 +33,7 @@ feature
 	ver1_a_file: STRING
 		do
 			if os_v = 1 then
-				Result := "C:\Users\v.rivera\Desktop\toDelete\resultAlias\ver1-mq-inherited.csv"
+				Result := "C:\Users\v.rivera\Desktop\toDelete\resultAlias\ver1-mq-not-inherited.csv"
 			else
 				Result := ""
 			end
@@ -61,7 +61,7 @@ feature
 		local
 			output_file: PLAIN_TEXT_FILE
 		do
-			if tracing then
+			--if tracing then
 				if os_v = 1 then
 					create output_file.make_open_write ("c:\Users\v.rivera\Desktop\toDelete\testingGraphViz\dd.dot")
 					output_file.put_string (graph)
@@ -69,7 +69,7 @@ feature
 				elseif os_v = 2 then
 					(create {EXECUTION_ENVIRONMENT}).launch ("echo %"" + graph + "%" | dot -Tpdf | okular - 2>/dev/null");
 				end
-			end
+--			end
 		end;
 
 note

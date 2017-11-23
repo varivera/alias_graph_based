@@ -115,7 +115,7 @@ feature {NONE}
 				c.classes as cla
 			loop
 				class_ := System.eiffel_universe.classes_with_name (cla.item.actual_class.name).first.compiled_class
-				class_to_analyse (class_, cla.item.actual_class.name, a_result, ver1, ver1_a, ver2, map)
+				class_to_analyse (class_, cla.item.actual_class.name, a_result, ver1_mq_inherited, ver1_mq_not_inherited, ver2_mq_inherited, ver2_mq_not_inherited, map)
 			end
 			io.new_line
 			io.new_line
@@ -123,7 +123,7 @@ feature {NONE}
 				across
 					sc as clu
 				loop
-					clusters (clu.item, a_result, ver1, ver1_a, ver2, map)
+					clusters (clu.item, a_result, ver1_mq_inherited, ver1_mq_not_inherited, ver2_mq_inherited, ver2_mq_not_inherited, map)
 				end
 			end
 		end
@@ -157,16 +157,20 @@ feature {NONE}
 					create modified_atts.make (0)
 					create queries_modify_clause.make (0)
 					create may_change.make (0)
-					map_mq_to_atts (class_, class_.class_id, actual_class_name, map_model_query_to_atts)
-					change_modify_may (class_, actual_class_name, modified_atts, queries_modify_clause, may_change)
-
-					--verification_1 (modified_atts, map_model_query_to_atts, queries_modify_clause, actual_class_name, ver1)
 						-- without carrying our model queries
 					create map_model_query_to_atts2.make (0)
+					map_mq_to_atts (class_, class_.class_id, actual_class_name, map_model_query_to_atts)
 					map_mq_to_atts_no_inheriting_mq (class_, class_.class_id, actual_class_name, map_model_query_to_atts2)
-					verification_1 (modified_atts, map_model_query_to_atts2, queries_modify_clause, actual_class_name, ver1_a)
-					verification_2 (modified_atts, map_model_query_to_atts, may_change, actual_class_name, ver2)
-					--verification_2 (modified_atts, map_model_query_to_atts, may_change, actual_class_name, ver2)
+					change_modify_may (class_, actual_class_name, modified_atts, queries_modify_clause, may_change)
+
+						-- MQ inherited
+					verification (modified_atts, map_model_query_to_atts, queries_modify_clause, actual_class_name, ver1_mq_inherited)
+						-- MQ not inherited
+					verification (modified_atts, map_model_query_to_atts2, queries_modify_clause, actual_class_name, ver1_mq_not_inherited)
+						-- MQ inherited
+					verification (modified_atts, map_model_query_to_atts, may_change, actual_class_name, ver2_mq_inherited)
+						-- MQ not inherited
+					verification (modified_atts, map_model_query_to_atts2, may_change, actual_class_name, ver2_mq_not_inherited)
 
 
 					visualisation (map_model_query_to_atts, map_model_query_to_atts2, modified_atts, queries_modify_clause, may_change, class_.name, a_result)
@@ -175,32 +179,25 @@ feature {NONE}
 			end
 		end
 
-	verification_1 (modified_atts, map_model_query_to_atts, queries_modify_clause: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; class_name: STRING; res: PLAIN_TEXT_FILE)
+	verification (modified_atts, map_model_query_to_atts, models_allow_to_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; class_name: STRING; res: PLAIN_TEXT_FILE)
 			-- the result of change calculus should be a subset of
 			-- the set of the modify clause
 			-- it reports the result is res
+			-- models_allow_to_change can be either queries_modified_clause or may_change
 		require
-			modified_atts.count = queries_modify_clause.count
+			modified_atts.count = models_allow_to_change.count
 		local
 			changed, allow_to_change: TWO_WAY_LIST [STRING]
 			mapped_modified_atts: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]
 		do
---			print ("%N==========================================================%N")
---			print (map_to_string (map_model_query_to_atts))
---			print ("%N==========================================================%N")
---			print (map_to_string (modified_atts))
---			print ("%N==========================================================%N")
---			--print (map_to_string (atts_to_model_queries (map_model_query_to_atts, modified_atts)))
---			print ("%N==========================================================%N")
 			mapped_modified_atts := atts_to_model_queries (map_model_query_to_atts, modified_atts)
 			across
 				mapped_modified_atts as feat
 			loop
 				check modified_atts.has (feat.key) end
 				changed := modified_atts[feat.key]
-				allow_to_change := get_map (map_model_query_to_atts, queries_modify_clause [feat.key])
 				res.put_string (class_name + "," + feat.key + "," + list_to_string (changed) + "," + list_to_string (feat.item) + "," +
-				list_to_string (queries_modify_clause [feat.key]) + "," + set_relation (feat.item, queries_modify_clause[feat.key]).out + "%N")
+				list_to_string (models_allow_to_change [feat.key]) + "," + set_relation (feat.item, models_allow_to_change[feat.key]).out + "%N")
 			end
 		end
 
@@ -208,8 +205,6 @@ feature {NONE}
 			-- given the map between model queries and class attributes they depend on
 			-- and the map between features and actual class attibutes being modified by features
 			-- returns for each feature the set of modified model queries
-		local
-			tmp: TWO_WAY_LIST [STRING]
 		do
 			create Result.make (modified_atts.count)
 			across
@@ -223,15 +218,6 @@ feature {NONE}
 						mq_map as mq
 					loop
 						if is_in_list (atts.item, mq.item) then
-							across
-								Result[feat.key] as i
-							loop
-								print (i.item)
-								io.new_line
-							end
-							print (mq.key)
-							io.new_line
-							print ("%N"+feat.key+"====%N")
 							if not is_in_list (mq.key, Result [feat.key]) then
 								Result [feat.key].force (mq.key)
 							end
@@ -241,37 +227,11 @@ feature {NONE}
 				end
 			end
 
-			create tmp.make
-			tmp.force ("a")
-			tmp.force ("c")
-			tmp.force ("d")
-
-			print (is_in_list("d",tmp))
-			print (is_in_list("f",tmp))
-
 		end
 
 	is_in_list (e: STRING; l: TWO_WAY_LIST [STRING]): BOOLEAN
 		do
 			Result := across l as elems some e ~ elems.item  end
-		end
-
-	verification_2 (modified_atts, map_model_query_to_atts, may_change: HASH_TABLE [TWO_WAY_LIST [STRING], STRING]; class_name: STRING; res: PLAIN_TEXT_FILE)
-			-- the result of change calculus should be a subset of
-			-- the set of the may change
-			-- it reports the result is res
-		require
-			modified_atts.count = may_change.count
-		local
-			changed, allow_to_change: TWO_WAY_LIST [STRING]
-		do
-			across
-				modified_atts as feat
-			loop
-				changed := feat.item
-				allow_to_change := get_map (map_model_query_to_atts, may_change [feat.key])
-				res.put_string (class_name + "," + feat.key + "," + list_to_string (may_change [feat.key]) + "," + list_to_string (allow_to_change) + "," + list_to_string (changed) + "," + set_relation (changed, allow_to_change).out + "%N")
-			end
 		end
 
 	list_to_string (l: TWO_WAY_LIST [STRING]): STRING
@@ -325,13 +285,6 @@ feature {NONE}
 			create mqs.make
 			find_model_queries (class_, mqs)
 
-			across
-				mqs as m
-			loop
-				print (m.item)
-				io.new_line
-			end
-
 			if
 				class_.name ~ "V_ARRAYED_LIST_ITERATOR"
 				or class_.name ~ "V_ARRAY_ITERATOR"
@@ -369,8 +322,6 @@ feature {NONE}
 					if not r.is_deferred
 						-- apparently they do not need to be MML and then r.type.actual_type.name.starts_with ("MML")
 					then
-						print ("Mapping - Feature: " + model.item)
-						io.new_line
 						create l_visitor.make (class_base_id)
 						routine.body.process (l_visitor)
 						mq.force (l_visitor.mq_list, r.name_32)
@@ -517,9 +468,6 @@ feature {NONE}
 			l_visitor: MAY_CHANGE_VISITOR
 			assertion_server: ASSERTION_SERVER
 		do
-			if routine.e_feature.name_32 ~ "make" then
-				print ("")
-			end
 			if not routine.is_function then
 				create l_visitor.make (routine)
 				across
