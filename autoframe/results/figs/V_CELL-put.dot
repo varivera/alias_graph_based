@@ -1,0 +1,9 @@
+digraph g {
+	node [shape=box]
+	b1[color=purple label=<ALIAS_ROUTINE [0x2C5A0299958]>]
+	b2[color=blue label=<{V_CELL}>]
+	b3[label=<{G#1}>]
+	b1->b2[color=red label=<Current>]
+	b2->b3[color=red label=<item>]
+	b1->b3[label=<v>]
+}

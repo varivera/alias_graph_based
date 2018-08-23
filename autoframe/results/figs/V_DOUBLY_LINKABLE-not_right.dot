@@ -1,0 +1,18 @@
+digraph g {
+	node [shape=box]
+	b1[color=purple label=<ALIAS_ROUTINE [0x2C5A0342FB8]>]
+	b2[color=blue label=<{V_DOUBLY_LINKABLE}>]
+	b3[label=<{G#1}>]
+	b4[label=<{V_DOUBLY_LINKABLE}>]
+	b5[label=<{V_DOUBLY_LINKABLE}>]
+	b6[color=blue label=<{V_DOUBLY_LINKABLE}>]
+	b7[color=blue label=<{ANY}>]
+	b8[color=blue label=<{BOOLEAN}>]
+	b1->b2[label=<Current>]
+	b2->b3[label=<item>]
+	b2->b4[label=<right>]
+	b2->b5[label=<left>]
+	b1->b6[label=<new_right>]
+	b1->b7[label=<o>]
+	b1->b8[label=<Result>]
+}

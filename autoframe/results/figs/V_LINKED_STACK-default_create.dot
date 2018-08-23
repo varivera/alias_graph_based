@@ -1,0 +1,12 @@
+digraph g {
+	node [shape=box]
+	b1[color=purple label=<ALIAS_ROUTINE [0x2C59FE50D18]>]
+	b2[color=blue label=<{V_LINKED_STACK}>]
+	b3[label=<{MML_BAG}>]
+	b4[label=<{MML_SEQUENCE}>]
+	b5[label=<{V_LINKED_LIST}>]
+	b1->b2[color=red label=<Current>]
+	b2->b3[label=<bag>]
+	b2->b4[label=<sequence>]
+	b2->b5[color=red label=<list>]
+}
