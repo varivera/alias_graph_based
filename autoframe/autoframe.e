@@ -1,6 +1,6 @@
 note
 	description: "The gui view of all tools."
-	date: "August, 2018"
+	date: "August, 2018" 
 	author: "Victor Rivera"
 
 class
