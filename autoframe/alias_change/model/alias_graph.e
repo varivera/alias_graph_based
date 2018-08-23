@@ -598,6 +598,99 @@ feature -- Managing possible Dyn Bind
 			alias_dyn.init_feat_version
 		end
 
+feature -- Queries
+	are_paths_aliased (p1, p2: ARRAY [STRING]): ARRAYED_LIST [BOOLEAN]
+			-- is path `p1' aliased to path `p2'?
+			-- paths are represented by a chain of contexts. e.g
+			-- variable a.b.c.d is represented as ["a","b", "c", "d"]
+			-- paths are assumed to start from the current context
+			-- note: only class variables (easily extendible - TODO)
+			--
+			-- it returns two values
+			--		Result[1] -> is there a path?
+			--		Result[2] -> are paths p1 and p2 unique?
+		local
+			obj1, obj2: ARRAYED_STACK [ALIAS_OBJECT]
+			inter: HASH_TABLE [INTEGER, ALIAS_OBJECT]
+			path: BOOLEAN
+
+			f:ARRAYED_LIST [BOOLEAN]
+		do
+			create {ARRAYED_LIST [BOOLEAN]} Result.make (2)
+			Result.force (False)
+			Result.force (False)
+				-- get the objects each path is pointing at
+			obj1 := alias_to_path (p1)
+			obj2 := alias_to_path (p2)
+			if obj1.count = obj2.count and obj1.count = 1 then
+				Result [2] := True
+			else
+				Result [2] := False
+			end
+				-- is there any intersection between obj1 and obj2?
+			create inter.make (0)
+			from
+			until
+				obj1.is_empty or path
+			loop
+				if inter.has (obj1.item) then
+					path := true
+				else
+					inter.force (1, obj1.item)
+					obj1.remove
+				end
+			end
+
+			from
+			until
+				path
+				or obj2.is_empty
+			loop
+				if inter.has (obj2.item) then
+					path := true
+				else
+					inter.force (1, obj2.item)
+					obj2.remove
+				end
+			end
+			Result[1] := path
+		ensure
+			Result.count = 2
+		end
+
+feature {NONE} -- Helper
+
+	alias_to_path (p: ARRAY [STRING]): ARRAYED_STACK [ALIAS_OBJECT]
+			-- given a path, retrieve the set of alias objects alias to it
+			-- Assumes the path exists
+		local
+			size: INTEGER
+			tmp: ALIAS_OBJECT
+		do
+			create Result.make (1)
+				-- init value
+			Result.force (current_routine.current_object)
+			across
+				p as var
+			loop
+				size := Result.count
+				across
+					1 |..| size as v
+				loop
+					tmp := Result.item
+					Result.remove
+					if tmp.attributes.has (create {ALIAS_KEY}.make (var.item)) then
+						across
+							tmp.attributes.at (create {ALIAS_KEY}.make (var.item)) as atts
+						loop
+							Result.force (atts.item)
+						end
+					end
+				end
+			end
+		end
+
+
 feature {NONE} -- Access
 
 	stack: TWO_WAY_LIST [ALIAS_ROUTINE]

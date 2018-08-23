@@ -331,25 +331,111 @@ feature {NONE}
 			alias_graph.restore_graph
 		end
 
+	assert_condition (cond: EXPR_AS): detachable CELL [BOOLEAN]
+			-- it analyses the condition. If it is possible to assert it
+			-- ir returns True or False, Void otherwise
+			-- basic cases are handled:
+			--			if a = b then
+			--			if a /= b then
+			-- where a and b are class variables. TODO: to extend
+			-- the analysis. The implmentation accepts paths.
+		local
+			var1, var2: STRING
+			aliased: ARRAYED_LIST [BOOLEAN]
+		do
+				-- for a /= b
+			if attached {BIN_NE_AS} cond as c then
+				if attached {BINARY_AS} c as bin then
+					if attached {EXPR_CALL_AS} bin.left as left then
+						if attached {ACCESS_ID_AS} left.call as l then
+							var1 := l.access_name_32
+						end
+					end
+					if attached {EXPR_CALL_AS} bin.right as right then
+						if attached {ACCESS_ID_AS} right.call as r then
+							var2 := r.access_name_32
+						end
+					end
+				end
+				if not var1.is_empty and not var2.is_empty  then
+					aliased := alias_graph.are_paths_aliased (<<var1>>, <<var2>>)
+
+					if aliased[1] and not aliased[2] then
+						-- It is not possible to assert the condition
+						do_nothing
+					elseif aliased[1] then
+						create Result.put (False)
+					else
+						create Result.put (True)
+					end
+				end
+				-- for a = b
+			elseif attached {BIN_EQ_AS} cond as c then
+				if attached {BINARY_AS} c as bin then
+					if attached {EXPR_CALL_AS} bin.left as left then
+						if attached {ACCESS_ID_AS} left.call as l then
+							var1 := l.access_name_32
+						end
+					end
+					if attached {EXPR_CALL_AS} bin.right as right then
+						if attached {ACCESS_ID_AS} right.call as r then
+							var2 := r.access_name_32
+						end
+					end
+				end
+				if not var1.is_empty and not var2.is_empty  then
+					aliased := alias_graph.are_paths_aliased (<<var1>>, <<var2>>)
+
+					if aliased[1] and not aliased[2] then
+						-- It is not possible to assert the condition
+						do_nothing
+					elseif aliased[1] then
+						create Result.put (True)
+					else
+						create Result.put (False)
+					end
+				end
+			end
+
+		end
+
 	process_if_as (a_node: IF_AS)
 				-- from {AST_ITERATOR}
+		local
+			assert_cond: detachable CELL [BOOLEAN]
 		do
 				-- Alias Analysis does not take into account the condition. However,
 				-- it might be an object test with definition of a
 				-- fresh variable (hence, the need of processing it)
 
-			a_node.condition.process (Current)
+			assert_cond := assert_condition (a_node.condition)
+
+			if tracing then
+				print (assert_cond)
+			end
+			if assert_cond = Void then
+				a_node.condition.process (Current)
+			end
+
 			alias_graph.current_routine.init_cond
 			alias_graph.current_routine.init_cond_branch
-			safe_process (a_node.compound)
-			alias_graph.restore_graph
+
+			if attached assert_cond as cond implies cond.item then
+				safe_process (a_node.compound)
+				alias_graph.restore_graph
+			end
+
+			if a_node.elsif_list /= Void then
+				assert_cond := Void
+			end
 			safe_process (a_node.elsif_list)
 			alias_graph.current_routine.init_cond_branch
-			safe_process (a_node.else_part)
 
-				--Note: no need to restore the graph: alias_graph.restore_graph
-			alias_graph.restore_graph
-
+			if attached assert_cond as cond implies not cond.item then
+				safe_process (a_node.else_part)
+					--Note: no need to restore the graph: alias_graph.restore_graph
+				alias_graph.restore_graph
+			end
 			alias_graph.current_routine.finalising_cond
 		end
 

@@ -14,7 +14,7 @@ create
 
 feature
 
-	tracing: BOOLEAN = false
+	tracing: BOOLEAN = true
 			-- should it print?
 
 	os_v: INTEGER = 1
