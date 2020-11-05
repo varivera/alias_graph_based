@@ -2,22 +2,22 @@ note
 	description: "[
 		Special objects: homogeneous sequences of values,
 		used to represent arrays and strings
-		]"
+	]"
 	library: "Free implementation of ELKS library"
 	status: "See notice at end of class."
 	legal: "See notice at end of class."
-	date: "$Date: 2013-03-22 15:46:02 +0400 (Fri, 22 Mar 2013) $"
-	revision: "$Revision: 92328 $"
+	date: "$Date$"
+	revision: "$Revision$"
 	external_alias: "[
 		`external_alias' note lists the pairs of aliasing occuring after
-		the execution of each external feature. Each pair is of form (v,w) 
-		where `v' is an attribute and `w' may be an attribute, local variable, 
-		an argument, or '+' (to denote `create'). Pairs are separated by '-'. 
-		The pair (v,+) indicates `v' will be aliased to a fresh object of the 
-		type of `v' (all previous aliases will be lost, e.g. create v). An empty 
+		the execution of each external feature. Each pair is of form (v,w)
+		where `v' is an attribute and `w' may be an attribute, local variable,
+		an argument, or '+' (to denote `create'). Pairs are separated by '-'.
+		The pair (v,+) indicates `v' will be aliased to a fresh object of the
+		type of `v' (all previous aliases will be lost, e.g. create v). An empty
 		set of pairs '{}' indicates no aliasing will be performed.
 
-		`items' is a special (non-existing) attribute representing all positions 
+		`items' is a special (non-existing) attribute representing all positions
 		of the array after subsuming.
 	]"
 
@@ -31,6 +31,9 @@ inherit
 		end
 
 	READABLE_INDEXABLE [T]
+		redefine
+			new_cursor
+		end
 
 create
 	make_empty,
@@ -80,7 +83,7 @@ feature {NONE} -- Initialization
 feature -- Access
 
 	item alias "[]" (i: INTEGER): T assign put
-			-- Item at `i'-th position
+			-- Item at `i'-th position.
 			-- (indices begin at 0)
 		note
 			external_alias: "{(Result,items)}"
@@ -89,7 +92,7 @@ feature -- Access
 		end
 
 	at alias "@" (i: INTEGER): T
-			-- Item at `i'-th position
+			-- Item at `i'-th position.
 			-- (indices begin at 0)
 		note
 			external_alias: "{(Result,items)}"
@@ -154,7 +157,7 @@ feature -- Access
 		end
 
 	native_array: NATIVE_ARRAY [T]
-			-- Only for compatibility with .NET
+			-- Only for compatibility with .NET.
 		note
 			external_alias: "{(Result,+)}"
 		require
@@ -165,8 +168,6 @@ feature -- Access
 
 	to_array: ARRAY [T]
 			-- Build an array representation of Current from `1' to `count'.
-		note
-			external_alias: "?"
 		do
 			create Result.make_from_special (Current)
 		ensure
@@ -175,31 +176,27 @@ feature -- Access
 			to_array_upper_set: Result.upper = count
 		end
 
-	index_set: INTEGER_INTERVAL
+	new_cursor: SPECIAL_ITERATION_CURSOR [T]
 			-- <Precursor>
-		note
-			external_alias: "{(Result,+)}"
 		do
-			create Result.make (lower, upper)
+			create Result.make (Current)
 		end
 
 feature -- Measurement
 
 	lower: INTEGER = 0
-			-- Minimum index of Current
+			-- Minimum index of Current.
 
 	upper: INTEGER
-			-- Maximum index of Current
+			-- Maximum index of Current.
 		note
 			external_alias: "{}"
 		do
 			Result := count - 1
-		ensure
-			definition: lower <= Result + 1
 		end
 
 	count: INTEGER
-			-- Count of special area
+			-- Count of special area.
 		note
 			external_alias: "{}"
 		external
@@ -207,7 +204,7 @@ feature -- Measurement
 		end
 
 	capacity: INTEGER
-			-- Capacity of special area
+			-- Capacity of special area.
 		note
 			external_alias: "{}"
 		external
@@ -219,9 +216,9 @@ feature -- Status report
 	filled_with (v: T; start_index, end_index: INTEGER): BOOLEAN
 			-- Are all items between index `start_index' and `end_index'
 			-- set to `v'?
-			-- (Use reference equality for comparison.)
+			-- (Use reference equality for comparison.)			
 		note
-			external_alias: "{}"			
+			external_alias: "{}"
 		require
 			start_index_non_negative: start_index >= 0
 			start_index_not_too_big: start_index <= end_index + 1
@@ -274,7 +271,7 @@ feature -- Status report
 				end
 			end
 		ensure
-			valid_on_empty_area: (n = 0) implies Result
+			valid_on_empty_area: n = 0 implies Result
 		end
 
 	valid_index (i: INTEGER): BOOLEAN
@@ -282,7 +279,7 @@ feature -- Status report
 		note
 			external_alias: "{}"
 		do
-			Result := (0 <= i) and (i < count)
+			Result := 0 <= i and i < count
 		end
 
 feature -- Element change
@@ -551,7 +548,7 @@ feature -- Element change
 					i := source_index + n - 1
 					nb := source_index - 1
 					l_offset := destination_index - source_index
-					if (destination_index + n >= count) then
+					if destination_index + n >= count then
 							-- Initialize elements above `count' to a dummy item.
 						fill_with (item (source_index), count, destination_index + n - 1)
 					end
@@ -680,7 +677,7 @@ feature -- Resizing
 		end
 
 	resized_area (n: INTEGER): like Current
-			-- Create a copy of Current with a count of `n'
+			-- A copy of Current with a count of `n'.
 		note
 			external_alias: "{(Result.items,items)}"
 		require
@@ -721,7 +718,7 @@ feature -- Resizing
 
 	aliased_resized_area (n: INTEGER): like Current
 			-- Try to resize `Current' with a count of `n', if not
-			-- possible a new copy
+			-- possible a new copy.
 		note
 			external_alias: "{(Result.items,items)}"
 		require
@@ -789,7 +786,7 @@ feature -- Removal
 		note
 			external_alias: "{(items,+)}"
 		obsolete
-			"Because of the new precondition, it is recommended to use `fill_with' instead."
+			"Because of the new precondition, it is recommended to use `fill_with' instead. [2017-05-31]"
 		require
 			has_default: ({T}).has_default
 		do
@@ -801,7 +798,7 @@ feature -- Removal
 
 feature -- Iteration
 
-	do_all_in_bounds (action: PROCEDURE [ANY, TUPLE [T]]; start_index, end_index: INTEGER)
+	do_all_in_bounds (action: PROCEDURE [T]; start_index, end_index: INTEGER)
 			-- Apply `action' to every item, from first to last.
 			-- Semantics not guaranteed if `action' changes the structure;
 			-- in such a case, apply iterator to clone of structure instead.
@@ -821,7 +818,7 @@ feature -- Iteration
 			end
 		end
 
-	do_if_in_bounds (action: PROCEDURE [ANY, TUPLE [T]]; test: FUNCTION [ANY, TUPLE [T], BOOLEAN]; start_index, end_index: INTEGER)
+	do_if_in_bounds (action: PROCEDURE [T]; test: FUNCTION [T, BOOLEAN]; start_index, end_index: INTEGER)
 			-- Apply `action' to every item that satisfies `test', from first to last.
 			-- Semantics not guaranteed if `action' or `test' changes the structure;
 			-- in such a case, apply iterator to clone of structure instead.
@@ -844,7 +841,7 @@ feature -- Iteration
 			end
 		end
 
-	there_exists_in_bounds (test: FUNCTION [ANY, TUPLE [T], BOOLEAN]; start_index, end_index: INTEGER): BOOLEAN
+	there_exists_in_bounds (test: FUNCTION [T, BOOLEAN]; start_index, end_index: INTEGER): BOOLEAN
 			-- Is `test' true for at least one item?
 		require
 			test_not_void: test /= Void
@@ -862,7 +859,7 @@ feature -- Iteration
 			end
 		end
 
-	for_all_in_bounds (test: FUNCTION [ANY, TUPLE [T], BOOLEAN]; start_index, end_index: INTEGER): BOOLEAN
+	for_all_in_bounds (test: FUNCTION [T, BOOLEAN]; start_index, end_index: INTEGER): BOOLEAN
 			-- Is `test' true for all items?
 		require
 			test_not_void: test /= Void
@@ -881,7 +878,7 @@ feature -- Iteration
 			end
 		end
 
-	do_all_with_index_in_bounds (action: PROCEDURE [ANY, TUPLE [T, INTEGER]]; start_index, end_index: INTEGER)
+	do_all_with_index_in_bounds (action: PROCEDURE [T, INTEGER]; start_index, end_index: INTEGER)
 			-- Apply `action' to every item, from first to last.
 			-- `action' receives item and its index.
 			-- Semantics not guaranteed if `action' changes the structure;
@@ -904,7 +901,7 @@ feature -- Iteration
 			end
 		end
 
-	do_if_with_index_in_bounds (action: PROCEDURE [ANY, TUPLE [T, INTEGER]]; test: FUNCTION [ANY, TUPLE [T, INTEGER], BOOLEAN]; start_index, end_index: INTEGER)
+	do_if_with_index_in_bounds (action: PROCEDURE [T, INTEGER]; test: FUNCTION [T, INTEGER, BOOLEAN]; start_index, end_index: INTEGER)
 			-- Apply `action' to every item that satisfies `test', from first to last.
 			-- `action' and `test' receive the item and its index.
 			-- Semantics not guaranteed if `action' or `test' changes the structure;
@@ -934,8 +931,6 @@ feature -- Output
 
 	debug_output: STRING
 			-- String that should be displayed in debugger to represent `Current'.
-		note
-			external_alias: "{}"
 		do
 			Result := Precursor
 			Result.append_string (", capacity=")
@@ -945,7 +940,7 @@ feature -- Output
 feature {NONE} -- Implementation
 
 	element_size: INTEGER
-			-- Size of elements
+			-- Size of elements.
 		note
 			external_alias: "{}"
 		external
@@ -969,11 +964,11 @@ feature {NONE} -- Implementation
 		end
 
 invariant
-	count_less_than_capacity: count <= capacity
+	consistent_count: count = upper - lower + 1
 
 note
-	copyright: "Copyright (c) 1984-2013, Eiffel Software and others"
-	license:   "Eiffel Forum License v2 (see http://www.eiffel.com/licensing/forum.txt)"
+	copyright: "Copyright (c) 1984-2020, Eiffel Software and others"
+	license: "Eiffel Forum License v2 (see http://www.eiffel.com/licensing/forum.txt)"
 	source: "[
 			Eiffel Software
 			5949 Hollister Ave., Goleta, CA 93117 USA

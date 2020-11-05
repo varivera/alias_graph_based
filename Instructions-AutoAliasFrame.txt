@@ -1,0 +1,39 @@
+==================================================================================================
+Instructions to get the tool going (11.2020)
+==================================================================================================
+Installing VS
+- Download and install Visual Studio. The free version is ok. Make sure to install all .Net tools (around 6GB :()
+
+Installing EiffelStudio 20.05 Windows:
+- Download and install the built from https://ftp.eiffel.com/pub/beta/nightly/:  Eiffel_20.05_rev_104521-windows.msi
+
+
+Installing EiffelStudio source (help from Jocelyn):
+- Download the source from: https://gitlab.com/eiffelsoftware/eiffelstudio
+- set the environment variables
+set ISE_EIFFEL=C:\work\eiffel
+set ISE_PLATFORM=windows
+set ISE_C_COMPILER=msc_vc140
+set EIFFEL_SRC=C:\Users\Victor\Desktop\work\eiffelstudio\Src
+set ISE_LIBRARY=%EIFFEL_SRC%
+set PATH=%PATH%;%ISE_EIFFEL%\studio\spec\%ISE_PLATFORM%\bin
+set PATH=%PATH%;%ISE_EIFFEL%\tools\spec\%ISE_PLATFORM%\bin
+set PATH=%PATH%;%ISE_EIFFEL%\library\gobo\spec\%ISE_PLATFORM%\bin
+set PATH=%PATH%;%ISE_EIFFEL%\esbuilder\spec\%ISE_PLATFORM%\bin
+cd %EIFFEL_SRC%
+echo "Compile all C related libraries (use espawn, so you are sure to have C compiler tool in the PATH)"
+espawn "geant prepare"
+
+Compiling and launching EiffelStudio
+cd %EIFFEL_SRC%\Eiffel\Ace
+ec -config ec.ecf -target bench -gui 
+(it will take some time to compile the first time.)
+
+- Once EiffelStudio is up, make sure to add "-gui" to the paraeters (so EiffelStudio is launch properly):
+	Click on Execution (from the menu) > Execution Parameters ... > Add
+	add "-gui" to the Arguments field.
+
+==================================================================================================
+Preparation for the tools
+==================================================================================================
+- SPECIAL is a special class used for the implementation of arrays in Eiffel. The class is implemented outside Eiffel, hence, we need to add the correspoding "external_alias" to routines. For that, either change the class or copy the "external_alias" one by one: https://github.com/varivera/alias_graph_based/blob/master/special.e
