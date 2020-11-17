@@ -11,10 +11,10 @@ Installing EiffelStudio 20.05 Windows:
 Installing EiffelStudio source (help from Jocelyn):
 - Download the source from: https://gitlab.com/eiffelsoftware/eiffelstudio
 - set the environment variables
-set ISE_EIFFEL=C:\work\eiffel
-set ISE_PLATFORM=windows
+set ISE_EIFFEL=C:\eiffel2
+set ISE_PLATFORM=win64
 set ISE_C_COMPILER=msc_vc140
-set EIFFEL_SRC=C:\Users\Victor\Desktop\work\eiffelstudio\Src
+set EIFFEL_SRC=C:\Users\Victor\Desktop\Frame\eiffelstudio\Src
 set ISE_LIBRARY=%EIFFEL_SRC%
 set PATH=%PATH%;%ISE_EIFFEL%\studio\spec\%ISE_PLATFORM%\bin
 set PATH=%PATH%;%ISE_EIFFEL%\tools\spec\%ISE_PLATFORM%\bin
