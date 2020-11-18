@@ -1,5 +1,5 @@
 ==================================================================================================
-Instructions to get the tool going (11.2020)
+Instructions to get the tool going (11.2020) -- Windows
 ==================================================================================================
 Installing VS
 - Download and install Visual Studio. The free version is ok. Make sure to install all .Net tools (around 6GB :()
@@ -28,6 +28,44 @@ Compiling and launching EiffelStudio
 cd %EIFFEL_SRC%\Eiffel\Ace
 ec -config ec.ecf -target bench -gui 
 (it will take some time to compile the first time.)
+
+
+==================================================================================================
+Instructions to get the tool going (11.2020) -- Linux (Ubuntu)
+==================================================================================================
+Installing EiffelStudio 20.05 Linux:
+- Download and install the built from https://ftp.eiffel.com/pub/beta/nightly/:  Eiffel_20.09_rev_104739-linux-x86-64.tar.bz2
+	-> if "Failed to load module "canberra-gtk-module"", install "sudo apt install libcanberra-gtk-module libcanberra-gtk3-module"
+	-> set the corresponding variables (see below)
+
+
+Installing EiffelStudio source (help from Jocelyn):
+- EiffelStudio requires GTK+ 2.4.0 or above to function properly.
+to check: pkg-config --modversion gtk+-2.0
+to install: sudo apt-get install libgtk2.0-dev; sudo apt-get install libxtst-dev
+- Download the source from: https://gitlab.com/eiffelsoftware/eiffelstudio
+- set the environment variables
+export ISE_EIFFEL=/home/varivera/work/built-Eiffel/Eiffel_20.09
+export ISE_PLATFORM=linux-x86-64
+export EIFFEL_SRC=/home/varivera/work/eiffelstudio/Src
+export ISE_LIBRARY=$EIFFEL_SRC
+export PATH=$PATH:$ISE_EIFFEL/studio/spec/$ISE_PLATFORM/bin
+export PATH=$PATH:$ISE_EIFFEL/tools/spec/$ISE_PLATFORM/bin
+export PATH=$PATH:$ISE_EIFFEL/library/gobo/spec/$ISE_PLATFORM/bin
+export PATH=$PATH:$ISE_EIFFEL/esbuilder/spec/$ISE_PLATFORM/bin
+cd $EIFFEL_SRC
+geant prepare
+
+
+Compiling and launching EiffelStudio
+cd $EIFFEL_SRC/Eiffel/Ace
+ec -config ec.ecf -target bench -gui 
+(it will take some time to compile the first time.)
+
+
+==================================================================================================
+OS independent
+==================================================================================================
 
 - Once EiffelStudio is up, make sure to add "-gui" to the paraeters (so EiffelStudio is launch properly):
 	Click on Execution (from the menu) > Execution Parameters ... > Add
