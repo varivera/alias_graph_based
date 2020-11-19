@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<system xmlns="http://www.eiffel.com/developers/xml/configuration-1-21-0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.eiffel.com/developers/xml/configuration-1-21-0 http://www.eiffel.com/developers/xml/configuration-1-21-0.xsd" name="from_jml" uuid="9708A006-DD20-4417-A6CC-8AC3A852FDC5">
+	<target name="from_jml">
+		<root class="APPLICATION" feature="make"/>
+		<file_rule>
+			<exclude>/CVS$</exclude>
+			<exclude>/EIFGENs$</exclude>
+			<exclude>/\.git$</exclude>
+			<exclude>/\.svn$</exclude>
+		</file_rule>
+		<option warning="warning" manifest_array_type="mismatch_warning">
+			<assertions precondition="true" postcondition="true" check="true" invariant="true" loop="true" supplier_precondition="true"/>
+		</option>
+		<setting name="console_application" value="true"/>
+		<setting name="total_order_on_reals" value="false"/>
+		<setting name="dead_code_removal" value="feature"/>
+		<precompile name="base_pre" location="$ISE_PRECOMP\base-scoop-safe.ecf"/>
+		<library name="base" location="$ISE_LIBRARY\library\base\base.ecf"/>
+		<cluster name="from_jml" location=".\">
+			<cluster name="table" location="\mnt\ca991a48-2d41-4382-a840-5c2ac6991444\work\research\AutoAliasFrame\alias_graph_based\autoframe\fromJML\From_JML\table\"/>
+			<cluster name="models" location="\mnt\ca991a48-2d41-4382-a840-5c2ac6991444\work\research\AutoAliasFrame\alias_graph_based\autoframe\fromJML\From_JML\models\"/>
+		</cluster>
+	</target>
+</system>
